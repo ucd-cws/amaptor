@@ -3,7 +3,7 @@
 
 The goal of Amaptor is to be a _map adaptor_ - providing a single interface
 for most mapping needs that works against both arcpy.mapping (ArcMap 10.x/Python 2.7)
-and arcpy.mp (ArcGIS Pro/Python 3.4+).
+and arcpy.mp (ArcGIS Pro/Python 3.4+). Think of it as being like the "six" library of ArcGIS mapping.
 
 arcpy.mapping and arcpy.mp are separated for _good reason_ - the concepts behind
 map documents/projects changed between ArcMap and ArcGIS Pro, so amaptop, as currently
