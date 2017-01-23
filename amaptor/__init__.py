@@ -97,6 +97,9 @@ class Map(object):
 				else:
 					return layer
 
+		if len(layers) == 0:  # basically, we should only be here if find_all is True and find_all came up empty
+			raise LayerNotFoundError("Layer with provided name {} or path {} not found".format(name, path))
+
 		return layers
 
 
