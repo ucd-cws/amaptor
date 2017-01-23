@@ -69,7 +69,8 @@ class Project(object):
 
 	def _pro_setup(self):
 		"""
-			Sets up the data based on the ArcGIS Pro Project
+			Sets up the data based on the ArcGIS Pro Project. Only called if working with arcpy.mp and after any needed
+			conversion from Map Document to Pro Project is done.
 		:param path:
 		:return:
 		"""
@@ -78,6 +79,11 @@ class Project(object):
 			self.maps.append(Map(l_map))
 
 	def _arcmap_setup(self):
+		"""
+			Sets up data based on an ArcGIS Map Document. Only called if working with arcpy.mapping and after any
+			needed conversion from Pro Project to map document is done (can we go that way?)
+		:return:
+		"""
 		pass  # to implement when I switch my interpreter to ArcMap's so I can get autocomplete checking, etc
 		# self.MapDocument = mapping.
 
