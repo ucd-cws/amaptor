@@ -4,18 +4,77 @@ __name__ = "amaptor"
 import logging
 log = logging.getLogger("amaptor")
 
+# Only one of these will be true, but lets people test against the item of their choice (if amaptor.DESKTOP:, etc)
+ARCMAP = None
+PRO = None
+
 try:
 	from arcpy import mapping
-	DESKTOP = True
+	ARCMAP = True
 	PRO = False
 	log.debug("Found ArcGIS Desktop (arcpy.mapping)")
 except ImportError:
 	try:
 		from arcpy import mp
-		DESKTOP = False
+		ARCMAP = False
 		PRO = True
 		log.debug("Found ArcGIS Pro (arcpy.mp)")
 	except ImportError:
 		print("You must run {} on a Python installation that has arcpy installed".format(__name__))
 		raise
+
+
+class MapNotImplementedError(NotImplementedError):
+	pass  # for use when a specific mapping function not implemented
+
+
+class Map(object):
+	"""
+		Corresponds to an ArcMap Data Frame or an ArcGIS Pro Map
+	"""
+	def __init__(self, map_object):
+		self._map_object = map_object
+
+
+
+class Project(object):
+	"""
+		An ArcGIS Pro Project or an ArcMap map document - maps in ArcGIS Pro and data frames in ArcMap are Map class attached to this project
+		Access to the underlying object is provided using name ArcGISProProject and ArcMapDocument
+	"""
+	def __init__(self, path):
+
+		self.maps = []  # stores list of included maps/dataframes
+
+		if PRO:
+			if path.endswith("aprx"):
+				self._pro_setup(path)
+			elif path.endswith("mxd"):
+				raise MapNotImplementedError("Support for mxds in Pro is planned, but not implemented yet in amaptor")
+			else:
+				raise ValueError("Project or MXD path not recognized as an ArcGIS compatible file (.aprx or .mxd)")
+		else:  # ArcMap
+			if path.endswith("mxd"):
+				self._arcmap_setup(path)
+			elif path.endswith("aprx"):
+				# I need to find a way to create blank ArcGIS Pro projects here - may need to include one as a template to copy, but that seems silly/buggy.
+				# planned approach is to create a Pro project in a temporary location, and import the map document provided.
+				raise MapNotImplementedError("Support for Pro Projects (aprx) in ArcMap is planned, but not implemented yet in amaptor")
+			else:
+				raise ValueError("Project or MXD path not recognized as an ArcGIS compatible file (.aprx or .mxd)")
+
+	def _pro_setup(self, path):
+		"""
+			Sets up the data based on the ArcGIS Pro Project
+		:param path:
+		:return:
+		"""
+		self.ArcGISProProject = mp.ArcGISProject(path)
+		for l_map in self.ArcGISProProject.listMaps():
+			self.maps.append(Map(l_map))
+
+	def _arcmap_setup(self, path):
+		pass  # to implement when I switch my interpreter to ArcMap's
+		# self.MapDocument = mapping.
+
 
