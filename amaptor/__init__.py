@@ -45,17 +45,21 @@ class Project(object):
 	def __init__(self, path):
 
 		self.maps = []  # stores list of included maps/dataframes
+		self.path = None  # will be set after any conversion to current version of ArcGIS is done (aprx->mxd or vice versa)
 
+		# this conditional tree is getting a little beefy now - could probably be refactored
 		if PRO:
 			if path.endswith("aprx"):
-				self._pro_setup(path)
+				self.path = path
+				self._pro_setup()
 			elif path.endswith("mxd"):
 				raise MapNotImplementedError("Support for mxds in Pro is planned, but not implemented yet in amaptor")
 			else:
 				raise ValueError("Project or MXD path not recognized as an ArcGIS compatible file (.aprx or .mxd)")
 		else:  # ArcMap
 			if path.endswith("mxd"):
-				self._arcmap_setup(path)
+				self.path = path
+				self._arcmap_setup()
 			elif path.endswith("aprx"):
 				# I need to find a way to create blank ArcGIS Pro projects here - may need to include one as a template to copy, but that seems silly/buggy.
 				# planned approach is to create a Pro project in a temporary location, and import the map document provided.
@@ -63,18 +67,26 @@ class Project(object):
 			else:
 				raise ValueError("Project or MXD path not recognized as an ArcGIS compatible file (.aprx or .mxd)")
 
-	def _pro_setup(self, path):
+	def _pro_setup(self):
 		"""
 			Sets up the data based on the ArcGIS Pro Project
 		:param path:
 		:return:
 		"""
-		self.ArcGISProProject = mp.ArcGISProject(path)
+		self.ArcGISProProject = mp.ArcGISProject(self.path)
 		for l_map in self.ArcGISProProject.listMaps():
 			self.maps.append(Map(l_map))
 
-	def _arcmap_setup(self, path):
-		pass  # to implement when I switch my interpreter to ArcMap's
+	def _arcmap_setup(self):
+		pass  # to implement when I switch my interpreter to ArcMap's so I can get autocomplete checking, etc
 		# self.MapDocument = mapping.
+
+	def list_maps(self):
+		"""
+			Provided to give a similar interface to ArcGIS Pro - Project.maps is also publically accessible
+		:return:
+		"""
+		return self.maps
+
 
 
