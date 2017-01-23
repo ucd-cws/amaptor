@@ -27,13 +27,46 @@ except ImportError:
 class MapNotImplementedError(NotImplementedError):
 	pass  # for use when a specific mapping function not implemented
 
+class LayerNotFoundError(ValueError):
+	pass  # for use when looking up layers
+
 
 class Map(object):
 	"""
 		Corresponds to an ArcMap Data Frame or an ArcGIS Pro Map
 	"""
-	def __init__(self, map_object):
+	def __init__(self, map_object, project):
 		self._map_object = map_object
+		self.project = project
+		self.layers = []
+
+		self.list_layers()
+
+	def _get_layers_pro(self):
+		self.layers = self._map_object.listLayers()
+
+	def _get_layers_arcmap(self):
+		self.layers = mapping.ListLayers(self.project.MapDocument)
+
+	def list_layers(self):
+		if PRO:
+			self._get_layers_pro()
+		else:
+			self._get_layers_arcmap()
+
+		return self.layers
+
+	def insert_layer(self, reference_layer, insert_layer_or_layerfile, insert_position="BEFORE"):
+
+		if PRO:
+			self._map_object.insertLayer(reference_layer, insert_layer_or_layerfile=insert_layer_or_layerfile, insert_position=insert_position)
+		else:
+			mapping.InsertLayer(self._map_object, reference_layer, insert_layer_or_layerfile, insert_position)
+
+		# update the internal layers list at the end
+		self.list_layers()
+
+		"""
 
 
 
@@ -76,7 +109,7 @@ class Project(object):
 		"""
 		self.ArcGISProProject = mp.ArcGISProject(self.path)
 		for l_map in self.ArcGISProProject.listMaps():
-			self.maps.append(Map(l_map))
+			self.maps.append(Map(l_map, self))
 
 	def _arcmap_setup(self):
 		"""
