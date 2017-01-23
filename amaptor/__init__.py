@@ -66,8 +66,29 @@ class Map(object):
 		# update the internal layers list at the end
 		self.list_layers()
 
+	def insert_layer_by_name_or_path(self, insert_layer_or_layer_file, near_name=None, near_path=None, insert_position="BEFORE"):
+		"""
+			Not a standard arcpy.mapping or arcpy.mp function - given a name or data source path of a layer, finds it in the layers, and inserts it.
+			Only provide either near_name or near_path. If both are provided, near_path will be used because it's more specifci
+		:return: None
 		"""
 
+		reference_layer = self.find_layer(name=near_name, path=near_path)
+		self.insert_layer(reference_layer=reference_layer, insert_layer_or_layerfile=insert_layer_or_layer_file, insert_position=insert_position)
+
+	def find_layer(self, name=None, path=None):
+		"""
+			Given the name OR Path of a layer in the map, returns the layer object. If both are provided, returns based on path
+		:param name:
+		:param path:
+		:return: arcpy.Layer object
+		"""
+
+		for layer in self.layers:
+			if path is not None and layer.dataSource == path:
+				return layer
+			elif name is not None and layer.name == name:
+				return layer
 
 
 class Project(object):
