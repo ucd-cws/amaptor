@@ -1,8 +1,12 @@
 from setuptools import setup
 
-from amaptor.version import __version__, __author__
+try:
+	from amaptor.version import __version__, __author__
+except RuntimeError:  # added so it can be installed with setup.py develop when signed in as an admin that's not signed into Portal in ArcGIS Pro
+	__version__ = "0.0.5"
+	__author__ = "nickrsan"
 
-setup(name="geodatabase_tempfile",
+setup(name="amaptor",
 	version=__version__,
 	description="A compatibility layer (or adaptor) for mapping functions in ArcGIS 10.x (arcpy.mapping/Python 2) and"
 				" ArcGIS Pro (arcpy.mp/Python 3)",

@@ -1,4 +1,4 @@
-from version import __version__
+from .version import __version__
 __name__ = "amaptor"
 
 import logging
@@ -46,7 +46,7 @@ class Map(object):
 		self.layers = self._map_object.listLayers()
 
 	def _get_layers_arcmap(self):
-		self.layers = mapping.ListLayers(self.project.MapDocument)
+		self.layers = mapping.ListLayers(self.project.map_document)
 
 	def list_layers(self):
 		if PRO:
@@ -76,19 +76,28 @@ class Map(object):
 		reference_layer = self.find_layer(name=near_name, path=near_path)
 		self.insert_layer(reference_layer=reference_layer, insert_layer_or_layerfile=insert_layer_or_layer_file, insert_position=insert_position)
 
-	def find_layer(self, name=None, path=None):
+	def find_layer(self, name=None, path=None, find_all=False):
 		"""
-			Given the name OR Path of a layer in the map, returns the layer object. If both are provided, returns based on path
+			Given the name OR Path of a layer in the map, returns the layer object. If both are provided, returns based on path.
+			If multiple layers with the same name/path exist, returns the first one, unless find_all is True - then it returns a list with all instances
 		:param name:
 		:param path:
 		:return: arcpy.Layer object
 		"""
-
+		layers = []
 		for layer in self.layers:
 			if path is not None and layer.dataSource == path:
-				return layer
+				if find_all:
+					layers.append(layer)
+				else:
+					return layer
 			elif name is not None and layer.name == name:
-				return layer
+				if find_all:
+					layers.append(layer)
+				else:
+					return layer
+
+		return layers
 
 
 class Project(object):
