@@ -100,6 +100,10 @@ class Project(object):
 
 		self.maps = []  # stores list of included maps/dataframes
 		self.path = None  # will be set after any conversion to current version of ArcGIS is done (aprx->mxd or vice versa)
+		self.map_document = None
+		self.arcgis_pro_project = None
+
+		self._primary_document = None  # will be an alias for either self.map_document or self.arcgis_pro_project depending on what we're working with - makes it easier for items where API isn't different
 
 		# this conditional tree is getting a little beefy now - could probably be refactored
 		if PRO:
@@ -128,18 +132,21 @@ class Project(object):
 		:param path:
 		:return:
 		"""
-		self.ArcGISProProject = mp.ArcGISProject(self.path)
-		for l_map in self.ArcGISProProject.listMaps():
+		self.arcgis_pro_project = mp.ArcGISProject(self.path)
+		self._primary_document = self.arcgis_pro_project
+		for l_map in self.arcgis_pro_project.listMaps():
 			self.maps.append(Map(l_map, self))
 
 	def _arcmap_setup(self):
 		"""
 			Sets up data based on an ArcGIS Map Document. Only called if working with arcpy.mapping and after any
-			needed conversion from Pro Project to map document is done (can we go that way?)
+			needed conversion from Pro Project to map docusment is done (can we go that way?)
 		:return:
 		"""
-		pass  # to implement when I switch my interpreter to ArcMap's so I can get autocomplete checking, etc
-		# self.MapDocument = mapping.
+		self.map_document = mapping.MapDocument(self.path)
+		self._primary_document = self.map_document
+		for l_map in mapping.ListDataFrames(self.map_document):
+			self.maps.append(Map(l_map, self))
 
 	def list_maps(self):
 		"""
@@ -148,5 +155,9 @@ class Project(object):
 		"""
 		return self.maps
 
+	def save(self):
+		self._primary_document.save()
 
+	def save_a_copy(self, path):
+		self._primary_document.saveACopy(path)
 
