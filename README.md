@@ -1,4 +1,6 @@
 # Amaptor - Arcpy mapping compatibility layer
+[![Code Issues](https://www.quantifiedcode.com/api/v1/project/060aec7923304e209e5d14a676731572/badge.svg)](https://www.quantifiedcode.com/app/project/060aec7923304e209e5d14a676731572)
+
 The goal of Amaptor is to be a _map adaptor_ - providing a single interface
 for most mapping needs that works against both arcpy.mapping (ArcMap 10.x/Python 2.7)
 and arcpy.mp (ArcGIS Pro/Python 3.4+).
