@@ -181,7 +181,7 @@ class Project(object):
 
 
 def _import_mxd_to_new_pro_project(mxd, blank_pro_template=_PRO_BLANK_TEMPLATE):
-	log.warning("Import MXD to new Pro Project - if you call .save() it will not save back to original MXD. Use .save_a_copy('new_path') instead.")
+	log.warning("WARNING: Importing MXD to new Pro Project - if you call .save() it will not save back to original MXD. Use .save_a_copy('new_path') instead.")
 
 	# can safely assume that if this is called, we're running on Pro and that's already been checked
 
