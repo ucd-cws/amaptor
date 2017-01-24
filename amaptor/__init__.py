@@ -1,3 +1,5 @@
+import os
+
 from .version import __version__
 __name__ = "amaptor"
 
@@ -23,6 +25,8 @@ except ImportError:
 		print("You must run {} on a Python installation that has arcpy installed".format(__name__))
 		raise
 
+_TEMPLATES = os.path.join(os.path.split(os.path.abspath(__file__))[0], "templates")
+_PRO_BLANK_TEMPLATE = os.path.join(_TEMPLATES, "pro", "blank_pro_project", "blank_pro_project.aprx")
 
 class MapNotImplementedError(NotImplementedError):
 	pass  # for use when a specific mapping function not implemented
@@ -133,7 +137,7 @@ class Project(object):
 			elif path.endswith("aprx"):
 				# I need to find a way to create blank ArcGIS Pro projects here - may need to include one as a template to copy, but that seems silly/buggy.
 				# planned approach is to create a Pro project in a temporary location, and import the map document provided.
-				raise MapNotImplementedError("Support for Pro Projects (aprx) in ArcMap is planned, but not implemented yet in amaptor")
+				raise MapNotImplementedError("Support for Pro Projects in ArcMap is not possible. Please provide an MXD template to work with.")
 			else:
 				raise ValueError("Project or MXD path not recognized as an ArcGIS compatible file (.aprx or .mxd)")
 
@@ -173,3 +177,6 @@ class Project(object):
 	def save_a_copy(self, path):
 		self._primary_document.saveACopy(path)
 
+
+def _import_mxd_to_new_pro_project(mxd, blank_pro_template):
+	log.warning("Import MXD to new Pro Project - if you call .save() it will not save back to original MXD. Use .save_a_copy('new_path') instead.")
