@@ -27,3 +27,27 @@ but uses some of the core methods:
 You'll notice that some parts of the API are new. I've added convenience functions for common tasks, but will work on fleshing
 out the core API for normal calls as well. I plan to follow the ArcGIS Pro API where possible (but lowercasing and underscoring names)
 to keep concepts similar.
+
+## Limitations
+When using amaptor with existing files, you should plan to have template documents for each version, because ArcGIS Pro projects cannot be
+imported back into ArcMap. If you provide an MXD on ArcGIS Pro, amaptor will import it into an ArcGIS Pro project automatically,
+but cannot do the same for Pro Projects using ArcMap/arcpy.mapping. See below for an example:
+
+```python
+import amaptor
+
+PRO_TEMPLATE = "path_to_pro_aprx_file"
+ARCMAP_TEMPLATE = "path_to_similar_mxd"
+
+if amaptor.PRO:
+	project = amaptor.Project(PRO_TEMPLATE)
+else:
+	project = amaptor.Project(ARCMAP_TEMPLATE)
+	
+# ... do mapping things with project here
+
+```
+
+This approach will give the best results, though isn't viable in all situations (for example, updating references to data in
+ArcGIS Pro Projects on a machine with ArcMap). Still, code that works with templates for the current platform
+or creates and manages its own files will work fine with only that slight adjustment.
