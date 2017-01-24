@@ -10,17 +10,20 @@ log = logging.getLogger("amaptor")
 # Only one of these will be true, but lets people test against the item of their choice (if amaptor.DESKTOP:, etc)
 ARCMAP = None
 PRO = None
+MAP_EXTENSION = None
 
 try:
 	from arcpy import mapping
 	ARCMAP = True
 	PRO = False
+	MAP_EXTENSION = "mxd"
 	log.debug("Found ArcGIS Desktop (arcpy.mapping)")
 except ImportError:
 	try:
 		from arcpy import mp
 		ARCMAP = False
 		PRO = True
+		MAP_EXTENSION = "aprx"
 		log.debug("Found ArcGIS Pro (arcpy.mp)")
 	except ImportError:
 		print("You must run {} on a Python installation that has arcpy installed".format(__name__))
@@ -80,6 +83,21 @@ class Map(object):
 
 		reference_layer = self.find_layer(name=near_name, path=near_path)
 		self.insert_layer(reference_layer=reference_layer, insert_layer_or_layerfile=insert_layer_or_layer_file, insert_position=insert_position)
+
+	def insert_feature_class_with_symbology(self, feature_class, layer_file, near_name=None, near_path=None, insert_position="BEFORE"):
+		"""
+			Given a path to a feature calss, and a path to a layer file, creates a layer with layer file symbology and
+			inserts it using insert_layer_by_name_or_path's approach
+		:param feature_class:
+		:param layer_file:
+		:param near_name:
+		:param near_path:
+		:param insert_position:
+		:return:
+		"""
+
+		layer = make_layer_with_file_symbology(feature_class=feature_class, layer_file=layer_file)
+		self.insert_layer_by_name_or_path(layer, near_name=near_name, near_path=near_path, insert_position=insert_position)
 
 	def find_layer(self, name=None, path=None, find_all=False):
 		"""
@@ -198,3 +216,15 @@ def _import_mxd_to_new_pro_project(mxd, blank_pro_template=_PRO_BLANK_TEMPLATE):
 
 	# return the project path, setup will continue from here
 	return new_temp_project
+
+
+def make_layer_with_file_symbology(feature_class, layer_file):
+	if PRO:
+		layer_file = mp.LayerFile(layer_file)
+		for layer in layer_file.listLayers():
+			break
+	else:
+		layer = mapping.Layer(layer_file)
+
+	layer.dataSource = feature_class
+	return layer
