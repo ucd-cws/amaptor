@@ -34,17 +34,17 @@ imported back into ArcMap. If you provide an MXD on ArcGIS Pro, amaptor will imp
 but cannot do the same for Pro Projects using ArcMap/arcpy.mapping. See below for an example:
 
 ```python
-import amaptor
-
-PRO_TEMPLATE = "path_to_pro_aprx_file"
-ARCMAP_TEMPLATE = "path_to_similar_mxd"
-
-if amaptor.PRO:
-	project = amaptor.Project(PRO_TEMPLATE)
-else:
-	project = amaptor.Project(ARCMAP_TEMPLATE)
+	import amaptor
 	
-# ... do mapping things with project here
+	PRO_TEMPLATE = "path_to_pro_aprx_file"
+	ARCMAP_TEMPLATE = "path_to_similar_mxd"
+	
+	if amaptor.PRO:  # can also reverse and test if amaptor.ARCMAP
+		project = amaptor.Project(PRO_TEMPLATE)
+	else:
+		project = amaptor.Project(ARCMAP_TEMPLATE)
+		
+	# ... do mapping things with project here
 
 ```
 

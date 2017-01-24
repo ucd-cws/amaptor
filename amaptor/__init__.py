@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 from .version import __version__
 __name__ = "amaptor"
@@ -125,11 +126,12 @@ class Project(object):
 		if PRO:
 			if path.endswith("aprx"):
 				self.path = path
-				self._pro_setup()
 			elif path.endswith("mxd"):
-				raise MapNotImplementedError("Support for mxds in Pro is planned, but not implemented yet in amaptor")
+				self.path = _import_mxd_to_new_pro_project(path)
 			else:
 				raise ValueError("Project or MXD path not recognized as an ArcGIS compatible file (.aprx or .mxd)")
+
+			self._pro_setup()
 		else:  # ArcMap
 			if path.endswith("mxd"):
 				self.path = path
@@ -178,5 +180,21 @@ class Project(object):
 		self._primary_document.saveACopy(path)
 
 
-def _import_mxd_to_new_pro_project(mxd, blank_pro_template):
+def _import_mxd_to_new_pro_project(mxd, blank_pro_template=_PRO_BLANK_TEMPLATE):
 	log.warning("Import MXD to new Pro Project - if you call .save() it will not save back to original MXD. Use .save_a_copy('new_path') instead.")
+
+	# can safely assume that if this is called, we're running on Pro and that's already been checked
+
+	# copy blank project to new location - template is 1.3+
+	blank_project = mp.ArcGISProject(blank_pro_template)
+	new_temp_project = tempfile.mktemp(".aprx", "pro_project_import")
+	blank_project.saveACopy(new_temp_project)
+	del(blank_project)
+
+	# strictly speaking, we don't need to destroy and recreate - should be able to edit original without saving - doing this just to keep things clear
+	project = mp.ArcGISProject(new_temp_project)
+	project.importDocument(mxd, include_layout=True)
+	project.save()
+
+	# return the project path, setup will continue from here
+	return new_temp_project
