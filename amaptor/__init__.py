@@ -84,7 +84,7 @@ class Map(object):
 		reference_layer = self.find_layer(name=near_name, path=near_path)
 		self.insert_layer(reference_layer=reference_layer, insert_layer_or_layerfile=insert_layer_or_layer_file, insert_position=insert_position)
 
-	def insert_feature_class_with_symbology(self, feature_class, layer_file, near_name=None, near_path=None, insert_position="BEFORE"):
+	def insert_feature_class_with_symbology(self, feature_class, layer_file, layer_name=None, near_name=None, near_path=None, insert_position="BEFORE"):
 		"""
 			Given a path to a feature calss, and a path to a layer file, creates a layer with layer file symbology and
 			inserts it using insert_layer_by_name_or_path's approach
@@ -96,7 +96,7 @@ class Map(object):
 		:return:
 		"""
 
-		layer = make_layer_with_file_symbology(feature_class=feature_class, layer_file=layer_file)
+		layer = make_layer_with_file_symbology(feature_class=feature_class, layer_file=layer_file, layer_name=layer_name)
 		self.insert_layer_by_name_or_path(layer, near_name=near_name, near_path=near_path, insert_position=insert_position)
 
 	def find_layer(self, name=None, path=None, find_all=False):
@@ -218,7 +218,16 @@ def _import_mxd_to_new_pro_project(mxd, blank_pro_template=_PRO_BLANK_TEMPLATE):
 	return new_temp_project
 
 
-def make_layer_with_file_symbology(feature_class, layer_file):
+def make_layer_with_file_symbology(feature_class, layer_file, layer_name=None):
+	"""
+		Given a feature class and a template layer file with symbology, returns a new Layer object that has the layer
+		from the layer file with the feature class as its data source. Optionally, layer can be renamed with layer_name
+	:param feature_class:
+	:param layer_file:
+	:param layer_name:
+	:return:
+	"""
+	layer = None
 	if PRO:
 		layer_file = mp.LayerFile(layer_file)
 		for layer in layer_file.listLayers():
@@ -226,5 +235,11 @@ def make_layer_with_file_symbology(feature_class, layer_file):
 	else:
 		layer = mapping.Layer(layer_file)
 
+	if layer is None:
+		raise LayerNotFoundError("No layer available for copying from layer file")
+
 	layer.dataSource = feature_class
+	if layer_name:
+		layer.name = layer_name
+
 	return layer
