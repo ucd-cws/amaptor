@@ -3,7 +3,7 @@ from setuptools import setup
 try:
 	from amaptor.version import __version__, __author__
 except RuntimeError:  # added so it can be installed with setup.py develop when signed in as an admin that's not signed into Portal in ArcGIS Pro
-	__version__ = "0.0.5"
+	__version__ = "0.0.6.1"
 	__author__ = "nickrsan"
 
 setup(name="amaptor",
@@ -18,9 +18,11 @@ setup(name="amaptor",
 	make it easy to see at a glance that it's not the same code, and partially due to author preference
 	""",
 	packages=['amaptor', ],
+	package_data={"amaptor": [{"templates": ["*"]}]},
 	install_requires=[],
 	author=__author__,
 	author_email="nrsantos@ucdavis.edu",
 	url='https://github.com/ucd-cws/amaptor',
+	include_package_data=True
 	)
 

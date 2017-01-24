@@ -154,3 +154,9 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+# Project Specific Items
+amaptor/templates/pro/blank_pro_project/ImportLog/*
+pip.bat
+python.bat
+python2.bat
