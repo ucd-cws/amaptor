@@ -12,6 +12,8 @@ ARCMAP = None
 PRO = None
 MAP_EXTENSION = None
 
+import arcpy
+
 try:
 	from arcpy import mapping
 	ARCMAP = True
@@ -125,6 +127,22 @@ class Map(object):
 
 		return layers
 
+	def to_package(self, output_file, **kwargs):
+		"""
+			Though it's not normally a mapping method, packaging concepts need translation between the two versions, so
+			we've included to_package for maps and projects. In ArcGIS Pro, project.to_package will create a Project Package
+			and map.to_package will create a map package. In ArcMap, both will create a map package. Calling to_package on the map
+			will pass through all kwargs to map packaging because the signatures are the same between ArcMap and ArcGIS Pro.
+			Sending kwargs to project.to_package will only send to project package since they differ.
+		:param output_file:
+		:param kwargs:
+		:return:
+		"""
+		if PRO:
+			arcpy.PackageMap_management(self._map_object, output_file, **kwargs)
+		else:
+			arcpy.PackageMap_management(self.project.map_document, output_file, **kwargs)
+
 
 class Project(object):
 	"""
@@ -196,6 +214,22 @@ class Project(object):
 
 	def save_a_copy(self, path):
 		self._primary_document.saveACopy(path)
+
+	def to_package(self, output_file, **kwargs):
+		"""
+			Though it's not normally a mapping method, packaging concepts need translation between the two versions, so
+			we've included to_package for maps and projects. In ArcGIS Pro, project.to_package will create a Project Package
+			and map.to_package will create a map package. In ArcMap, both will create a map package. Extra **kwargs beyond
+			output path are only passed through to Pro Package command, not to map packages. To pass kwargs through to a map
+			package, use a map object's to_package method.
+		:param output_file:
+		:param kwargs:
+		:return:
+		"""
+		if PRO:
+			arcpy.PackageProject_management(self.arcgis_pro_project, output_file, **kwargs)
+		else:
+			arcpy.PackageMap_management(self.map_document, output_file)
 
 
 def _import_mxd_to_new_pro_project(mxd, blank_pro_template=_PRO_BLANK_TEMPLATE):
