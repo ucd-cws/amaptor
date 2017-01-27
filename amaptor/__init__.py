@@ -70,6 +70,18 @@ class Map(object):
 
 		return self.layers
 
+	def add_layer(self, add_layer, add_position="AUTO_ARRANGE"):
+		"""
+			Straight replication of addLayer API
+		:param add_layer:
+		:param add_position:
+		:return:
+		"""
+		if PRO:
+			self._map_object.addLayer(add_layer, add_position)
+		else:
+			arcpy.mapping.addLayer(self._map_object, add_layer, add_position)
+
 	def insert_layer(self, reference_layer, insert_layer_or_layerfile, insert_position="BEFORE"):
 
 		if PRO:
@@ -253,12 +265,23 @@ class Project(object):
 
 		return layers
 
-	@property
-	def active_map(self):
+	def get_active_map(self, use_pro_backup=True):
+		"""
+
+		:param use_pro_backup: When True, it uses the first map in the ArcGIS Pro project, since Pro doesn't have a way
+		 to get the active map.
+		:return:
+		"""
 		if ARCMAP:
-			return self._primary_document.activeDataFrame
+			for each_map in self.maps:
+				if each_map._map_object.name == self._primary_document.activeDataFrame.name:
+					return each_map
 		else:
-			raise NotImplementedError("ArcGIS Pro does not provide an interface to the active map")
+			# ArcGIS Pro doesn't have this capability, so we'll just use the first map (unfortunately).
+			if use_pro_backup:
+				return self.maps[0]
+			else:
+				raise NotImplementedError("ArcGIS Pro does not provide an interface to the active map")
 
 	def save(self):
 		self._primary_document.save()
