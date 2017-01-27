@@ -265,6 +265,10 @@ class Project(object):
 
 		return layers
 
+	@property
+	def active_map(self):
+		return self.get_active_map()
+
 	def get_active_map(self, use_pro_backup=True):
 		"""
 
