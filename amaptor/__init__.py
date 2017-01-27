@@ -40,6 +40,10 @@ class MapNotImplementedError(NotImplementedError):
 class LayerNotFoundError(ValueError):
 	pass  # for use when looking up layers
 
+class EmptyFieldError(ValueError):
+	def __init__(self, field, description, **kwargs):
+		log.error("{} is empty or missing. {}".format(field, description))
+		super(EmptyFieldError, self).__init__(**kwargs)
 
 class Map(object):
 	"""
@@ -134,14 +138,19 @@ class Map(object):
 			and map.to_package will create a map package. In ArcMap, both will create a map package. Calling to_package on the map
 			will pass through all kwargs to map packaging because the signatures are the same between ArcMap and ArcGIS Pro.
 			Sending kwargs to project.to_package will only send to project package since they differ.
+
 		:param output_file:
 		:param kwargs:
 		:return:
 		"""
+
+		log.warning("Warning: Saving map to export package")
+		self.save()
+
 		if PRO:
 			arcpy.PackageMap_management(self._map_object, output_file, **kwargs)
 		else:
-			arcpy.PackageMap_management(self.project.map_document, output_file, **kwargs)
+			arcpy.PackageMap_management(self.project.path, output_file, **kwargs)
 
 
 class Project(object):
@@ -149,6 +158,7 @@ class Project(object):
 		An ArcGIS Pro Project or an ArcMap map document - maps in ArcGIS Pro and data frames in ArcMap are Map class attached to this project
 		Access to the underlying object is provided using name ArcGISProProject and ArcMapDocument
 	"""
+
 	def __init__(self, path):
 
 		self.maps = []  # stores list of included maps/dataframes
@@ -160,7 +170,9 @@ class Project(object):
 
 		# this conditional tree is getting a little beefy now - could probably be refactored
 		if PRO:
-			if path.endswith("aprx"):
+			if path == "CURRENT":
+				self.path = "CURRENT"  # will be redirected to actual path after setup
+			elif path.endswith("aprx"):
 				self.path = path
 			elif path.endswith("mxd"):
 				self.path = _import_mxd_to_new_pro_project(path)
@@ -168,9 +180,14 @@ class Project(object):
 				raise ValueError("Project or MXD path not recognized as an ArcGIS compatible file (.aprx or .mxd)")
 
 			self._pro_setup()
+
 		else:  # ArcMap
-			if path.endswith("mxd"):
-				self.path = path
+
+			if path == "CURRENT":
+				self.path = "CURRENT"
+				self._arcmap_setup()
+			elif path.endswith("mxd"):
+				self.path = path  # we'll overwrite once set up for "CURRENT"
 				self._arcmap_setup()
 			elif path.endswith("aprx"):
 				# I need to find a way to create blank ArcGIS Pro projects here - may need to include one as a template to copy, but that seems silly/buggy.
@@ -178,6 +195,9 @@ class Project(object):
 				raise MapNotImplementedError("Support for Pro Projects in ArcMap is not possible. Please provide an MXD template to work with.")
 			else:
 				raise ValueError("Project or MXD path not recognized as an ArcGIS compatible file (.aprx or .mxd)")
+
+		if path == "CURRENT":
+			self.path = self._primary_document.filePath
 
 	def _pro_setup(self):
 		"""
@@ -209,13 +229,44 @@ class Project(object):
 		"""
 		return self.maps
 
+	def find_layer(self, path, find_all=True):
+		"""
+			Finds a layer in all maps by searching for the path. By default finds all, but can find just the first one too
+		:param path:
+		:param find_all:
+		:return:
+		"""
+		layers = []
+		for map in self.maps:
+			try:
+				new_layers = map.find_layer(path=path, find_all=find_all)
+			except LayerNotFoundError:
+				continue
+
+			if find_all:  # if it didn't find any, we would have raised an exception, so we have something
+				layers += new_layers
+			else:  # if we were only supposed to get one, return it
+				return new_layers
+
+		if len(layers) == 0:
+			raise LayerNotFoundError()
+
+		return layers
+
+	@property
+	def active_map(self):
+		if ARCMAP:
+			return self._primary_document.activeDataFrame
+		else:
+			raise NotImplementedError("ArcGIS Pro does not provide an interface to the active map")
+
 	def save(self):
 		self._primary_document.save()
 
 	def save_a_copy(self, path):
 		self._primary_document.saveACopy(path)
 
-	def to_package(self, output_file, **kwargs):
+	def to_package(self, output_file, summary, tags, **kwargs):
 		"""
 			Though it's not normally a mapping method, packaging concepts need translation between the two versions, so
 			we've included to_package for maps and projects. In ArcGIS Pro, project.to_package will create a Project Package
@@ -226,10 +277,14 @@ class Project(object):
 		:param kwargs:
 		:return:
 		"""
+
+		log.warning("Warning: Saving project to export package")
+		self.save()
+
 		if PRO:
-			arcpy.PackageProject_management(self.arcgis_pro_project, output_file, **kwargs)
+			arcpy.PackageProject_management(self.path, output_file, summary=summary, tags=tags, **kwargs)
 		else:
-			arcpy.PackageMap_management(self.map_document, output_file)
+			arcpy.PackageMap_management(self.path, output_file, summary=summary, tags=tags)
 
 
 def _import_mxd_to_new_pro_project(mxd, blank_pro_template=_PRO_BLANK_TEMPLATE):
