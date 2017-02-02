@@ -287,7 +287,7 @@ class Project(object):
 		:return:
 		"""
 		for l_map in self.maps:
-			if l_map.map_object.name == name:
+			if l_map._map_object.name == name:
 				return l_map
 		else:
 			raise MapNotFoundError(name)
@@ -313,7 +313,7 @@ class Project(object):
 		:param template_map: The map document to import. If we're just going with a blank new map, leave as default. To
 							import some other template as your base, provide a path to a document importable to ArcGIS Pro'
 							.importDocument function for projects.
-		:return:
+		:return: amaptor.Map instance - also added to the map document, but returned for immediate use.
 		"""
 
 		if ARCMAP:
@@ -330,6 +330,7 @@ class Project(object):
 				l_map.name = name
 				new_map = Map(self, l_map)
 				self.maps.append(new_map)
+				return new_map
 
 	def get_active_map(self, use_pro_backup=True):
 		"""
