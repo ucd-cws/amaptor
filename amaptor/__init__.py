@@ -34,6 +34,16 @@ except ImportError:
 _TEMPLATES = os.path.join(os.path.split(os.path.abspath(__file__))[0], "templates")
 _PRO_BLANK_TEMPLATE = os.path.join(_TEMPLATES, "pro", "blank_pro_project", "blank_pro_project.aprx")
 
+class MapExists(FileExistsError):
+	def __init__(self, map_name, **kwargs):
+		log.error("Map with name {} already exists.".format(map_name))
+		super(MapExists, self).__init__(**kwargs)
+
+class MapNotFoundError(FileExistsError):
+	def __init__(self, map_name, **kwargs):
+		log.error("Map with name {} does not exist.".format(map_name))
+		super(MapNotFoundError, self).__init__(**kwargs)
+
 class MapNotImplementedError(NotImplementedError):
 	pass  # for use when a specific mapping function not implemented
 
@@ -49,7 +59,8 @@ class Map(object):
 	"""
 		Corresponds to an ArcMap Data Frame or an ArcGIS Pro Map
 	"""
-	def __init__(self, map_object, project):
+	def __init__(self, project, map_object):
+
 		self._map_object = map_object
 		self.project = project
 		self.layers = []
@@ -221,7 +232,7 @@ class Project(object):
 		self.arcgis_pro_project = mp.ArcGISProject(self.path)
 		self._primary_document = self.arcgis_pro_project
 		for l_map in self.arcgis_pro_project.listMaps():
-			self.maps.append(Map(l_map, self))
+			self.maps.append(Map(self, l_map))
 
 	def _arcmap_setup(self):
 		"""
@@ -232,7 +243,7 @@ class Project(object):
 		self.map_document = mapping.MapDocument(self.path)
 		self._primary_document = self.map_document
 		for l_map in mapping.ListDataFrames(self.map_document):
-			self.maps.append(Map(l_map, self))
+			self.maps.append(Map(self, l_map))
 
 	def list_maps(self):
 		"""
@@ -268,6 +279,57 @@ class Project(object):
 	@property
 	def active_map(self):
 		return self.get_active_map()
+
+	def find_map(self, name):
+		"""
+			Given a map name, returns the map object or raises
+		:param name:
+		:return:
+		"""
+		for l_map in self.maps:
+			if l_map.map_object.name == name:
+				return l_map
+		else:
+			raise MapNotFoundError(name)
+
+	def check_map_name(self, name):
+		"""
+			Checks to see if the project already has a map with a given name. Since names must be unique, it is good to check
+		:param name: name of map to check for
+		:return: None. Raises an error if name is taken
+		"""
+
+		try:
+			self.find_map(name)  # it finds one, then raise a MapExists error
+			raise MapExists(name)
+		except MapNotFoundError:
+			pass  # it's great if it's not found
+
+	def new_map(self, name, template_map=os.path.join(_TEMPLATES, "arcmap", "pro_import_map_template.mxd")):
+		"""
+			Creates a new map in the current project using a hack (importing a blank map document, and renaming data frame)
+			Warning: Only works in Pro due to workaround.
+		:param name: The name to give the imported map
+		:param template_map: The map document to import. If we're just going with a blank new map, leave as default. To
+							import some other template as your base, provide a path to a document importable to ArcGIS Pro'
+							.importDocument function for projects.
+		:return:
+		"""
+
+		if ARCMAP:
+			raise MapNotImplementedError("ArcMap doesn't suppport adding data frames to map documents from Python")
+
+		self.check_map_name(name)
+
+		# step 1: import
+		self._primary_document.importDocument(template_map)
+
+		# step 2: set up for amaptor and rename to match passed value
+		for l_map in self._primary_document.listMaps():
+			if l_map.name == "_rename_template_amaptor":
+				l_map.name = name
+				new_map = Map(self, l_map)
+				self.maps.append(new_map)
 
 	def get_active_map(self, use_pro_backup=True):
 		"""
