@@ -34,6 +34,9 @@ except ImportError:
 _TEMPLATES = os.path.join(os.path.split(os.path.abspath(__file__))[0], "templates")
 _PRO_BLANK_TEMPLATE = os.path.join(_TEMPLATES, "pro", "blank_pro_project", "blank_pro_project.aprx")
 
+if ARCMAP:
+	FileExistsError = OSError  # define it for Python 2, basically raise an OSError in that case
+
 class MapExists(FileExistsError):
 	def __init__(self, map_name, **kwargs):
 		log.error("Map with name {} already exists.".format(map_name))
@@ -45,7 +48,10 @@ class MapNotFoundError(FileExistsError):
 		super(MapNotFoundError, self).__init__(**kwargs)
 
 class MapNotImplementedError(NotImplementedError):
-	pass  # for use when a specific mapping function not implemented
+	def __init__(self, feature_name, arcmap_or_pro, **kwargs):
+		log.error("Feature {} is not implemented for Arc {}.".format(feature_name, arcmap_or_pro))
+		super(MapNotFoundError, self).__init__(**kwargs)
+	# for use when a specific mapping function not implemented
 
 class LayerNotFoundError(ValueError):
 	pass  # for use when looking up layers
@@ -66,6 +72,18 @@ class Map(object):
 		self.layers = []
 
 		self.list_layers()
+
+		self.frames = []
+		self.layouts = []
+
+	def _index_frames(self):
+		for layout in self.project.layouts:
+			for frame in layout.frames:
+				if frame.map.name == self._map_object.name:
+					self.frames.append(frame)
+					if layout not in self.layouts:
+						self.layouts.append(layout)
+
 
 	def _get_layers_pro(self):
 		self.layers = self._map_object.listLayers()
@@ -102,6 +120,30 @@ class Map(object):
 
 		# update the internal layers list at the end
 		self.list_layers()
+
+	def set_extent(self, extent_object, set_layout="ALL"):
+		if PRO:
+			self._map_object.defaultCamera.setExtent(extent_object)
+		else:
+			self._map_object.extent = extent_object
+
+	def zoom_to_layer(self, layer, set_layout="ALL"):
+		"""
+			Given a name of a layer as a string or a layer object, zooms the map extent to that layer
+			WARNING: In Pro, this will set all layouts related to this map if set_layout="ALL" or just the default camera
+			otherwise
+		:param layer: can be a string name of a layer, or a layer object
+		:return:
+		"""
+		if PRO:
+			if not isinstance(layer, arcpy._mp.Layer):
+				layer = self.find_layer(name=layer)
+			self.set_extent(arcpy.Describe(layer.dataSource).extent)
+		else:
+			if not isinstance(layer, arcpy._mapping.Layer):
+				layer = self.find_layer(name=layer)
+			self.set_extent(layer.getExtent())
+			arcpy.RefreshActiveView()
 
 	def insert_layer_by_name_or_path(self, insert_layer_or_layer_file, near_name=None, near_path=None, insert_position="BEFORE"):
 		"""
@@ -176,6 +218,16 @@ class Map(object):
 			arcpy.PackageMap_management(self.project.path, output_file, **kwargs)
 
 
+class Layout(object):
+	"""
+		Replicates Layouts so that we can do some nice things behind the scenes
+	"""
+
+	def __init__(self, layout_object):
+		self._layout_object = layout_object
+		self.frames = self._layout_object.listElements("MAPFRAME_ELEMENT")
+
+
 class Project(object):
 	"""
 		An ArcGIS Pro Project or an ArcMap map document - maps in ArcGIS Pro and data frames in ArcMap are Map class attached to this project
@@ -233,6 +285,13 @@ class Project(object):
 		self._primary_document = self.arcgis_pro_project
 		for l_map in self.arcgis_pro_project.listMaps():
 			self.maps.append(Map(self, l_map))
+
+		self.layouts = []
+		for layout in self._primary_document.listLayouts():
+			self.layouts.append(Layout(layout))
+
+		for map in self.maps:
+			map._index_frames()
 
 	def _arcmap_setup(self):
 		"""
@@ -305,7 +364,7 @@ class Project(object):
 		except MapNotFoundError:
 			pass  # it's great if it's not found
 
-	def new_map(self, name, template_map=os.path.join(_TEMPLATES, "arcmap", "pro_import_map_template.mxd")):
+	def new_map(self, name, template_map=os.path.join(_TEMPLATES, "arcmap", "pro_import_map_template.mxd"), template_df_name="_rename_template_amaptor"):
 		"""
 			Creates a new map in the current project using a hack (importing a blank map document, and renaming data frame)
 			Warning: Only works in Pro due to workaround.
@@ -313,6 +372,7 @@ class Project(object):
 		:param template_map: The map document to import. If we're just going with a blank new map, leave as default. To
 							import some other template as your base, provide a path to a document importable to ArcGIS Pro'
 							.importDocument function for projects.
+		:param template_df_name: The current name of the imported map document for renaming. Only needs to be set if template_map is overridden
 		:return: amaptor.Map instance - also added to the map document, but returned for immediate use.
 		"""
 
@@ -326,7 +386,7 @@ class Project(object):
 
 		# step 2: set up for amaptor and rename to match passed value
 		for l_map in self._primary_document.listMaps():
-			if l_map.name == "_rename_template_amaptor":
+			if l_map.name == template_df_name:
 				l_map.name = name
 				new_map = Map(self, l_map)
 				self.maps.append(new_map)
