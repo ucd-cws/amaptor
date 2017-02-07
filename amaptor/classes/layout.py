@@ -10,8 +10,8 @@ class Layout(object):
 
 	def __init__(self, layout_object, project):
 		self._layout_object = layout_object
-		self.frames = [MapFrame(frame, self) for frame in self._layout_object.listElements("MAPFRAME_ELEMENT")]  # frames connect back to maps, this connects to a project
 		self.project = project
+		self.frames = [MapFrame(frame, self) for frame in self._layout_object.listElements("MAPFRAME_ELEMENT")]  # frames connect back to maps, this connects to a project
 
 	@property
 	def name(self):

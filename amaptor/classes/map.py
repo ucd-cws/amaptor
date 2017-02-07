@@ -24,6 +24,8 @@ class Map(object):
 		self.frames = []
 		self.layouts = []
 
+		self._index_frames()
+
 	@property
 	def name(self):
 		return self.map_object.name
@@ -33,6 +35,8 @@ class Map(object):
 		self.map_object.name = value
 
 	def _index_frames(self):
+		self.frames = []
+		self.layouts = []
 		for layout in self.project.layouts:
 			for frame in layout.frames:
 				if frame.map.name == self.name:
@@ -103,8 +107,8 @@ class Map(object):
 		if PRO:
 			if set_frame == "ALL":
 				for frame in self.frames:
-					extent = reproject_extent(extent_object, frame.camera.getExtent())
-					frame.camera.setExtent(extent)
+					extent = reproject_extent(extent_object, frame.get_extent())
+					frame.set_extent(extent)
 					self.map_object.defaultCamera.setExtent(extent)
 			elif isinstance(set_frame, arcpy._mp.MapFrame):
 				extent = reproject_extent(extent_object, set_frame.camera.getExtent())
