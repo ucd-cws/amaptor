@@ -11,7 +11,7 @@ conceptualized isn't meant to guarantee complete functionality in both cases, bu
 provide a "good enough" for most uses compatibility layer that gets many tasks done in one codebase.
 You may still need to write code against specific versions, especially while this project is new.
 
-Documentation of the full API will be forthcoming, but here's an example that something trivial (copying a layer),
+Documentation of the full API can be found [online at Read the Docs](https://amaptor.readthedocs.io), but here's an example that something trivial (copying a layer),
 but uses some of the core methods:
 
 ```python
