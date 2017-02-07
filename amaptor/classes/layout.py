@@ -20,3 +20,6 @@ class Layout(object):
 	@name.setter
 	def name(self, value):
 		self._layout_object.name = value
+
+	def export_to_png(self, out_path, resolution=300):
+		self._layout_object.exportToPNG(out_path, resolution)

@@ -1,3 +1,4 @@
+import os
 import logging
 log = logging.getLogger("amaptor")
 
@@ -8,6 +9,7 @@ from amaptor.errors import *
 from amaptor.functions import reproject_extent, log
 from amaptor.functions import make_layer_with_file_symbology, reproject_extent
 from amaptor.classes.map_frame import MapFrame
+from amaptor.classes.layout import Layout
 
 class Map(object):
 	"""
@@ -161,6 +163,10 @@ class Map(object):
 		"""
 			Not a standard arcpy.mapping or arcpy.mp function - given a name or data source path of a layer, finds it in the layers, and inserts it.
 			Only provide either near_name or near_path. If both are provided, near_path will be used because it's more specifci
+			:param insert_layer_or_layer_file:
+			:param near_name:
+			:param near_path:
+			:param insert_position:
 		:return: None
 		"""
 
@@ -173,6 +179,7 @@ class Map(object):
 			inserts it using insert_layer_by_name_or_path's approach
 		:param feature_class:
 		:param layer_file:
+		:param layer_name:
 		:param near_name:
 		:param near_path:
 		:param insert_position:
@@ -188,6 +195,7 @@ class Map(object):
 			If multiple layers with the same name/path exist, returns the first one, unless find_all is True - then it returns a list with all instances
 		:param name:
 		:param path:
+		:param find_all:
 		:return: arcpy.Layer object
 		"""
 		layers = []
@@ -208,6 +216,31 @@ class Map(object):
 
 		return layers
 
+	def export_png(self, out_path, resolution=300, layout="ALL", ):
+		png_paths = []
+		if ARCMAP:
+			mapping.ExportToPNG(self.project.map_document, out_path, resolution=resolution)
+			png_paths.append(out_path)
+		else:
+			if isinstance(layout, arcpy._mp.Layout) or isinstance(layout, Layout):
+				if isinstance(layout, Layout):
+					layout.export_to_png(out_path, resolution)
+				else:
+					layout.exportToPNG(out_path, resolution)
+				png_paths.append(out_path)
+			elif layout == "ALL":
+				base_path, file_name = os.path.split(out_path)
+				file_base = os.path.splitext(file_name)
+
+				for layout in self.layouts:
+					output_path = os.path.join(base_path, "{}_{}.png".format(file_base, layout.name))
+					layout.export_to_png(output_path, resolution)
+					png_paths.append(output_path)
+
+		return png_paths
+
+
+
 	def to_package(self, output_file, **kwargs):
 		"""
 			Though it's not normally a mapping method, packaging concepts need translation between the two versions, so
@@ -222,7 +255,7 @@ class Map(object):
 		"""
 
 		log.warning("Warning: Saving map to export package")
-		self.save()
+		self.project.save()
 
 		if PRO:
 			arcpy.PackageMap_management(self.map_object, output_file, **kwargs)
