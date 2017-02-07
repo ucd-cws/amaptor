@@ -42,9 +42,9 @@ except RuntimeError:  # added so it can be installed with setup.py develop when 
 	__author__ = "nickrsan"
 
 if ON_RTD:
-	package_data = None
+	package_data = {}
 else:
-	package_data = {"amaptor": [{"templates": ["*"]}]},
+	package_data = {"package_data": {"amaptor": [{"templates": ["*"]}]}}
 
 setup(name="amaptor",
 	version=__version__,
@@ -61,10 +61,10 @@ setup(name="amaptor",
 	""",
 	packages=['amaptor', 'amaptor.classes', ],
 	install_requires=[],
-	package_data=package_data,
 	author=__author__,
 	author_email="nrsantos@ucdavis.edu",
 	url='https://github.com/ucd-cws/amaptor',
 	include_package_data=include_package_data,
+	**package_data
 	)
 
