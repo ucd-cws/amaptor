@@ -3,7 +3,7 @@ from setuptools import setup
 try:
 	from amaptor.version import __version__, __author__
 except RuntimeError:  # added so it can be installed with setup.py develop when signed in as an admin that's not signed into Portal in ArcGIS Pro
-	__version__ = "0.0.6.1"
+	__version__ = "0.1.0.1"
 	__author__ = "nickrsan"
 
 setup(name="amaptor",
@@ -15,14 +15,16 @@ setup(name="amaptor",
 	write your mapping code against this pacakge, it will work no matter which version of ArcGIS your end users are
 	running. In general, the API adheres closely to the ArcGIS Pro api, since that has a cleaner, object-oriented design,
 	but it may included differences. Further, methods are lowercased and underscored instead of camelcased, partially to
-	make it easy to see at a glance that it's not the same code, and partially due to author preference
+	make it easy to see at a glance that it's not the same code, and partially due to author preference.
+
+	Documentation can be found at http://amaptor.readthedocs.io
 	""",
-	packages=['amaptor', ],
+	packages=['amaptor', 'amaptor.classes', ],
 	package_data={"amaptor": [{"templates": ["*"]}]},
 	install_requires=[],
 	author=__author__,
 	author_email="nrsantos@ucdavis.edu",
 	url='https://github.com/ucd-cws/amaptor',
-	include_package_data=True
+	include_package_data=True,
 	)
 
