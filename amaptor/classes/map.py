@@ -7,7 +7,7 @@ from amaptor.version_check import PRO, mapping, mp
 from amaptor.errors import *
 from amaptor.functions import reproject_extent, log
 from amaptor.functions import make_layer_with_file_symbology, reproject_extent
-
+from amaptor.classes.map_frame import MapFrame
 
 class Map(object):
 	"""
@@ -52,6 +52,10 @@ class Map(object):
 		self.layers = mapping.ListLayers(self.project.map_document)
 
 	def list_layers(self):
+		"""
+			Returns the list of layers in the map or data frame. Also available as map.layers
+		:return:
+		"""
 		if PRO:
 			self._get_layers_pro()
 		else:
@@ -61,10 +65,12 @@ class Map(object):
 
 	def add_layer(self, add_layer, add_position="AUTO_ARRANGE"):
 		"""
-			Straight replication of addLayer API
-		:param add_layer:
-		:param add_position:
-		:return:
+			Straight replication of addLayer API in arcpy.mp and arcpy.mapping. Adds a layer to a specified position
+			in the table of contents.
+		:param add_layer: The layer to add to the map
+		:param add_position: The position to add the layer into. The default is AUTO_ARRANGE, and available options are the same
+			as those available on addLayer.
+		:return: None
 		"""
 		if PRO:
 			self.map_object.addLayer(add_layer, add_position)
@@ -74,7 +80,14 @@ class Map(object):
 		self.layers.append(add_layer)
 
 	def insert_layer(self, reference_layer, insert_layer_or_layerfile, insert_position="BEFORE"):
-
+		"""
+			Inserts a layer to a specific position in the table of contents, based on a reference layer.
+		:param reference_layer: The arcpy Layer instance to use as the reference layer
+		:param insert_layer_or_layerfile: The arcpy Layer instance to insert
+		:param insert_position: the position relative to the reference layer to insert the new layer. Default is "BEFORE" (above).
+		 	options correspond to those available on insertLayer in arcpy.mapping and arcpy.mp
+		:return: None
+		"""
 		if PRO:
 			self.map_object.insertLayer(reference_layer, insert_layer_or_layerfile=insert_layer_or_layerfile, insert_position=insert_position)
 		else:
@@ -89,10 +102,10 @@ class Map(object):
 			potential behaviors. If set_frame == "ALL" it sets all map frames linked to this map to this extent (default
 			behavior) and sets the default camera for this map so that future map frames will use the same extent.
 			If set_frame is an arcpy.mp MapFrame object instance, then it only sets the extent on that map frame.
-		:param extent_object:
+		:param extent_object: an arcpy.Extent object. It will be reprojected to the spatial reference of the map frame or data frame automatically.
 		:param set_frame: ignored in arcmap, behavior described in main method description.
 		:param add_buffer: adds an empty space of 5% of the distance across the feature class around the provided exetent
-		:return:
+		:return: None
 		"""
 
 		if add_buffer:
@@ -110,11 +123,15 @@ class Map(object):
 					extent = reproject_extent(extent_object, frame.get_extent())
 					frame.set_extent(extent)
 					self.map_object.defaultCamera.setExtent(extent)
-			elif isinstance(set_frame, arcpy._mp.MapFrame):
-				extent = reproject_extent(extent_object, set_frame.camera.getExtent())
-				set_frame.camera.setExtent(extent)
 			else:
-				raise ValueError("Invalid parameter set_frame. It can either be \"ALL\" or an instance of an arcpy.mp MapFrame object")
+				if isinstance(set_frame, MapFrame):
+					set_frame = set_frame._map_frame_object
+
+				if isinstance(set_frame, arcpy._mp.MapFrame):
+					extent = reproject_extent(extent_object, set_frame.camera.getExtent())
+					set_frame.camera.setExtent(extent)
+				else:
+					raise ValueError("Invalid parameter set_frame. It can either be \"ALL\" or an instance of an arcpy.mp MapFrame object")
 		else:
 			self.map_object.extent = reproject_extent(extent_object, self.map_object.extent)
 
@@ -122,9 +139,13 @@ class Map(object):
 		"""
 			Given a name of a layer as a string or a layer object, zooms the map extent to that layer
 			WARNING: In Pro, see the parameter information for set_layout on the set_extent method for a description
-			of how this option behaves.
+			of how this option behaves. Since maps don't correspond 1:1 to layouts, in some cases multiple layouts will
+			be changed.
 		:param layer: can be a string name of a layer, or a layer object
-		:return:
+		:param set_layout: PRO ONLY, but ignored in ArcMap, so can be safe to use. This parameter controls which layouts
+			are changed by the Zoom to Layer. By default, all linked layouts are updated. If an arcpy.mp.Layout instance
+			or an amaptor.Layout instance is provided, it zooms only that map frame to the layer.
+		:return: None
 		"""
 		if PRO:
 			if not isinstance(layer, arcpy._mp.Layer):
