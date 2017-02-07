@@ -4,6 +4,7 @@ import sys
 
 try:
 	import arcpy
+	include_package_data = True
 except ImportError:
 	ON_RTD = os.environ.get('READTHEDOCS', None) == 'True'
 	if ON_RTD:  # if we're on read-the-docs, then we need to mock out arcpy, otherwise raise the exception
@@ -29,6 +30,8 @@ except ImportError:
 		MOCK_MODULES = ['arcpy']
 		for mod_name in MOCK_MODULES:
 			sys.modules[mod_name] = Mock()
+
+		include_package_data = False
 	else:
 		raise
 
@@ -57,6 +60,6 @@ setup(name="amaptor",
 	author=__author__,
 	author_email="nrsantos@ucdavis.edu",
 	url='https://github.com/ucd-cws/amaptor',
-	include_package_data=True,
+	include_package_data=include_package_data,
 	)
 
