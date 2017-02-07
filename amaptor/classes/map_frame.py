@@ -13,3 +13,11 @@ class MapFrame(object):
 	@name.setter
 	def name(self, value):
 		self._map_frame_object.name = value
+
+	@property
+	def map(self):
+		return self._map_frame_object.map
+
+	@map.setter
+	def map(self, value):
+		self._map_frame_object.map = value
