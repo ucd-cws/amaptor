@@ -1,4 +1,36 @@
 from setuptools import setup
+import os
+import sys
+
+try:
+	import arcpy
+except ImportError:
+	ON_RTD = os.environ.get('READTHEDOCS', None) == 'True'
+	if ON_RTD:  # if we're on read-the-docs, then we need to mock out arcpy, otherwise raise the exception
+		class Mock(object):
+			def __init__(self, *args, **kwargs):
+				pass
+
+			def __call__(self, *args, **kwargs):
+				return Mock()
+
+			@classmethod
+			def __getattr__(cls, name):
+				if name in ('__file__', '__path__'):
+					return '/dev/null'
+				elif name[0] == name[0].upper():
+					mockType = type(name, (), {})
+					mockType.__module__ = __name__
+					return mockType
+				else:
+					return Mock()
+
+
+		MOCK_MODULES = ['arcpy']
+		for mod_name in MOCK_MODULES:
+			sys.modules[mod_name] = Mock()
+	else:
+		raise
 
 try:
 	from amaptor.version import __version__, __author__
