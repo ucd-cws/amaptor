@@ -2,11 +2,11 @@ from setuptools import setup
 import os
 import sys
 
+ON_RTD = os.environ.get('READTHEDOCS', None) == 'True'
 try:
 	import arcpy
 	include_package_data = True
 except ImportError:
-	ON_RTD = os.environ.get('READTHEDOCS', None) == 'True'
 	if ON_RTD:  # if we're on read-the-docs, then we need to mock out arcpy, otherwise raise the exception
 		class Mock(object):
 			def __init__(self, *args, **kwargs):
@@ -41,6 +41,11 @@ except RuntimeError:  # added so it can be installed with setup.py develop when 
 	__version__ = "0.1.0.1"
 	__author__ = "nickrsan"
 
+if ON_RTD:
+	package_data = None
+else:
+	package_data = {"amaptor": [{"templates": ["*"]}]},
+
 setup(name="amaptor",
 	version=__version__,
 	description="A compatibility layer (or adaptor) for mapping functions in ArcGIS 10.x (arcpy.mapping/Python 2) and"
@@ -55,8 +60,8 @@ setup(name="amaptor",
 	Documentation can be found at http://amaptor.readthedocs.io
 	""",
 	packages=['amaptor', 'amaptor.classes', ],
-	package_data={"amaptor": [{"templates": ["*"]}]},
 	install_requires=[],
+	package_data=package_data,
 	author=__author__,
 	author_email="nrsantos@ucdavis.edu",
 	url='https://github.com/ucd-cws/amaptor',
