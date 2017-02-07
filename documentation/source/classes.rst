@@ -1,16 +1,12 @@
 Amaptor Classes
 ===============
 
-.. py:module:: amaptor
+.. toctree::
+   :maxdepth: 2
 
-.. autoclass:: Project
-	:members:
+   classes-project
+   classes-map
+   classes-map_frame
+   classes-layout
 
-.. autoclass:: Map
-	:members:
 
-.. autoclass:: Layout
-	:members:
-
-.. autoclass:: MapFrame
-	:members:

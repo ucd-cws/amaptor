@@ -12,6 +12,8 @@ Contents:
    :maxdepth: 2
 
    classes
+   functions
+   errors
 
 Indices and tables
 ==================
