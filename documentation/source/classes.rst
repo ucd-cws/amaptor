@@ -1,4 +1,16 @@
 Amaptor Classes
 ===============
 
-.. automodule:: amaptor
+.. py:module:: amaptor
+
+.. autoclass:: Project
+	:members:
+
+.. autoclass:: Map
+	:members:
+
+.. autoclass:: Layout
+	:members:
+
+.. autoclass:: MapFrame
+	:members:
