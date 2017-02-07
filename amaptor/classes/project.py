@@ -124,11 +124,15 @@ class Project(object):
 
 	@property
 	def active_map(self):
+		"""
+			Returns the active map object or data frame as determined by get_active_map()
+		:return:
+		"""
 		return self.get_active_map()
 
 	def find_map(self, name):
 		"""
-			Given a map name, returns the map object or raises
+			Given a map name, returns the map object or raises MapNotFoundError
 		:param name:
 		:return:
 		"""
@@ -187,6 +191,11 @@ class Project(object):
 			pass  # it's great if it's not found
 
 	def find_layout(self, name):
+		"""
+			PRO ONLY. Given a layout name, returns the amaptor.Layout object or raises LayoutNotFoundError
+		:param name:
+		:return:
+		"""
 		for layout in self.layouts:
 			if layout.name == name:
 				return layout
@@ -194,6 +203,15 @@ class Project(object):
 			raise LayoutNotFoundError(name)
 
 	def new_layout(self, name, template_layout=_PRO_BLANK_LAYOUT, template_name="_pro_blank_layout_template"):
+		"""
+			PRO ONLY. Adds a new layout to an ArcGIS Pro Project by importing a saved blank layout. Alternatively,
+			 you can provide an importable layout document (.pagx) for ArcGIS Pro, and then provide that layout's name
+			 as template_name so that it can be renamed, and the provided template will be used instead of a blank.
+		:param name:
+		:param template_layout:
+		:param template_name:
+		:return:
+		"""
 		if ARCMAP:
 			raise MapNotImplementedError("ArcMap doesn't suppport adding data frames to map documents from Python")
 
@@ -227,9 +245,18 @@ class Project(object):
 				raise NotImplementedError("ArcGIS Pro does not provide an interface to the active map")
 
 	def save(self):
+		"""
+			Saves the project or map document in place.
+		:return:
+		"""
 		self.primary_document.save()
 
 	def save_a_copy(self, path):
+		"""
+			Saves the project or map document to the provided path.
+		:param path:
+		:return:
+		"""
 		self.primary_document.saveACopy(path)
 
 	def to_package(self, output_file, summary, tags, **kwargs):
