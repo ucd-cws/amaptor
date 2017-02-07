@@ -66,8 +66,7 @@ class Project(object):
 		"""
 			Sets up the data based on the ArcGIS Pro Project. Only called if working with arcpy.mp and after any needed
 			conversion from Map Document to Pro Project is done.
-		:param path:
-		:return:
+		:return: None
 		"""
 		self.arcgis_pro_project = mp.ArcGISProject(self.path)
 		self.primary_document = self.arcgis_pro_project
@@ -84,7 +83,7 @@ class Project(object):
 		"""
 			Sets up data based on an ArcGIS Map Document. Only called if working with arcpy.mapping and after any
 			needed conversion from Pro Project to map docusment is done (can we go that way?)
-		:return:
+		:return: None
 		"""
 		self.map_document = mapping.MapDocument(self.path)
 		self.primary_document = self.map_document
@@ -101,9 +100,9 @@ class Project(object):
 	def find_layer(self, path, find_all=True):
 		"""
 			Finds a layer in all maps by searching for the path. By default finds all, but can find just the first one too
-		:param path:
-		:param find_all:
-		:return:
+		:param path: the full path of the data source for the layer
+		:param find_all: When True, reutrns a list of amaptor.Map instances that match. When false, returns only the first match
+		:return: list of amaptor.map instances or a single amaptor.map instance.
 		"""
 		layers = []
 		for map in self.maps:
@@ -133,8 +132,8 @@ class Project(object):
 	def find_map(self, name):
 		"""
 			Given a map name, returns the map object or raises MapNotFoundError
-		:param name:
-		:return:
+		:param name: name of map to find.
+		:return: amaptor.Map instance
 		"""
 		for l_map in self.maps:
 			if l_map.name == name:
@@ -144,7 +143,8 @@ class Project(object):
 
 	def check_map_name(self, name):
 		"""
-			Checks to see if the project already has a map with a given name. Since names must be unique, it is good to check
+			Checks to see if the project or map document already has a map or data frame with a given name.
+			Since names must be unique in ArcGIS Pro, this code helps check before adding new maps
 		:param name: name of map to check for
 		:return: None. Raises an error if name is taken
 		"""
@@ -157,7 +157,7 @@ class Project(object):
 
 	def new_map(self, name, template_map=os.path.join(_TEMPLATES, "arcmap", "pro_import_map_template.mxd"), template_df_name="_rename_template_amaptor"):
 		"""
-			Creates a new map in the current project using a hack (importing a blank map document, and renaming data frame)
+			PRO ONLY. Creates a new map in the current project using a hack (importing a blank map document, and renaming data frame)
 			Warning: Only works in Pro due to workaround.
 		:param name: The name to give the imported map
 		:param template_map: The map document to import. If we're just going with a blank new map, leave as default. To
@@ -184,6 +184,11 @@ class Project(object):
 				return new_map
 
 	def check_layout_name(self, name):
+		"""
+			PRO ONLY. Given the name of a layout, confirms it doesn't exist and raised amaptor.LayoutExists if it's found
+		:param name: the case sensitive name of an existing layout to find
+		:return: None. Raises amaptor.LayoutExists if layout with name exists.
+		"""
 		try:
 			self.find_layout(name)  # it finds one, then raise a MapExists error
 			raise LayoutExists(name)
@@ -193,8 +198,8 @@ class Project(object):
 	def find_layout(self, name):
 		"""
 			PRO ONLY. Given a layout name, returns the amaptor.Layout object or raises LayoutNotFoundError
-		:param name:
-		:return:
+		:param name: the name of the layout to find.
+		:return: amaptor.Layout instance with given name.
 		"""
 		for layout in self.layouts:
 			if layout.name == name:
@@ -207,10 +212,15 @@ class Project(object):
 			PRO ONLY. Adds a new layout to an ArcGIS Pro Project by importing a saved blank layout. Alternatively,
 			 you can provide an importable layout document (.pagx) for ArcGIS Pro, and then provide that layout's name
 			 as template_name so that it can be renamed, and the provided template will be used instead of a blank.
-		:param name:
-		:param template_layout:
-		:param template_name:
-		:return:
+		:param name: The name to give the new layout
+		:param template_layout: The template to use for creating the layout (an ArcGIS Pro .pagx file).
+			If none is provided, uses a blank template
+		:param template_name: The name of the layout in the template. Only define this value if you also provide a new
+			template layout and the name should match the layout name in the template. This parameter is used to find
+			the inserted template and rename it. Strange things will happen if this value does not match the name of the
+			layout in the template_layout.
+		:return: amaptor.Layout instance. This layout will already have been added to the project, but is returned for
+			convenience.
 		"""
 		if ARCMAP:
 			raise MapNotImplementedError("ArcMap doesn't suppport adding data frames to map documents from Python")
@@ -228,10 +238,13 @@ class Project(object):
 
 	def get_active_map(self, use_pro_backup=True):
 		"""
-
+			Emulates functionality of arcpy.mapping(mxd).activeDataFrame. In ArcMap, it returns the amaptor.Map object
+			that corresponds to that active Data Frame. In Pro, which doesn't have the concept of active maps, it by
+			default returns the first map in the document. If use_pro_backup is set to False, it will instead
+			raise amaptor.MapNotImplementedError
 		:param use_pro_backup: When True, it uses the first map in the ArcGIS Pro project, since Pro doesn't have a way
 		 to get the active map.
-		:return:
+		:return: amaptor.Map instance
 		"""
 		if ARCMAP:
 			for each_map in self.maps:
@@ -242,20 +255,20 @@ class Project(object):
 			if use_pro_backup:
 				return self.maps[0]
 			else:
-				raise NotImplementedError("ArcGIS Pro does not provide an interface to the active map")
+				raise MapNotImplementedError("ArcGIS Pro does not provide an interface to the active map")
 
 	def save(self):
 		"""
 			Saves the project or map document in place.
-		:return:
+		:return: None
 		"""
 		self.primary_document.save()
 
 	def save_a_copy(self, path):
 		"""
 			Saves the project or map document to the provided path.
-		:param path:
-		:return:
+		:param path: the new path to save the copy of the document to.
+		:return: None
 		"""
 		self.primary_document.saveACopy(path)
 
@@ -266,9 +279,9 @@ class Project(object):
 			and map.to_package will create a map package. In ArcMap, both will create a map package. Extra **kwargs beyond
 			output path are only passed through to Pro Package command, not to map packages. To pass kwargs through to a map
 			package, use a map object's to_package method.
-		:param output_file:
-		:param kwargs:
-		:return:
+		:param output_file: the path to output the package to
+		:param kwargs: dictionary of kwargs to pass through to project packaging in Pro.
+		:return: None
 		"""
 
 		log.warning("Warning: Saving project to export package")
