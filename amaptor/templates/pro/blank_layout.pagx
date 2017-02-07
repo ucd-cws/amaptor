@@ -1,0 +1,39 @@
+{
+  "type" : "CIMLayoutDocument",
+  "version" : "1.3.0",
+  "build" : 5861,
+  "binaryReferences" : [
+    {
+      "type" : "CIMBinaryReference",
+      "uRI" : "CIMPATH=Metadata/b7df778f4cc038348f3bfc751d331ea7.xml",
+      "data" : "<?xml version=\"1.0\"?>\r\n<metadata xml:lang=\"en\"><Esri><CreaDate>20170206</CreaDate><CreaTime>11452900</CreaTime><ArcGISFormat>1.0</ArcGISFormat><SyncOnce>TRUE</SyncOnce></Esri><dataIdInfo><idCitation><resTitle>Layout</resTitle></idCitation></dataIdInfo></metadata>\r\n"
+    }
+  ],
+  "layoutDefinition" : {
+    "type" : "CIMLayout",
+    "name" : "_pro_blank_layout_template",
+    "uRI" : "CIMPATH=layout/layout.xml",
+    "sourceModifiedTime" : {
+      "type" : "TimeInstant"
+    },
+    "metadataURI" : "CIMPATH=Metadata/b7df778f4cc038348f3bfc751d331ea7.xml",
+    "page" : {
+      "type" : "CIMPage",
+      "height" : 11,
+      "width" : 8.5,
+      "units" : {
+        "uwkid" : 109008
+      },
+      "showRulers" : true,
+      "showGuides" : true,
+      "smallestRulerDivision" : 0.01
+    },
+    "dateExported" : {
+      "type" : "TimeInstant"
+    },
+    "datePrinted" : {
+      "type" : "TimeInstant"
+    },
+    "colorModel" : "CMYK"
+  }
+}
