@@ -23,3 +23,6 @@ class Layout(object):
 
 	def export_to_png(self, out_path, resolution=300):
 		self._layout_object.exportToPNG(out_path, resolution)
+
+	def export_to_pdf(self, out_path, **kwargs):
+		self._layout_object.exportToPDF(out_path, **kwargs)

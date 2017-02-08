@@ -51,3 +51,6 @@ but cannot do the same for Pro Projects using ArcMap/arcpy.mapping. See below fo
 This approach will give the best results, though isn't viable in all situations (for example, updating references to data in
 ArcGIS Pro Projects on a machine with ArcMap). Still, code that works with templates for the current platform
 or creates and manages its own files will work fine with only that slight adjustment.
+
+By [Nick Santos](https://watershed.ucdavis.edu/people/nick-santos), UC Davis Center for Watershed Sciences and written for a project funded by the State of California.
+Licensed under the MIT License.

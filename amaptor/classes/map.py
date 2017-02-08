@@ -275,6 +275,26 @@ class Map(object):
 		"""
 		return self._export(out_path, layout=layout, mapping_function="ExportToPNG", mp_function="exportToPNG", layout_function="export_to_png", extension="png", resolution=resolution,)
 
+	def export_pdf(self, out_path, layout="ALL", **kwargs):
+		"""
+			See documentation for _export for description of behavior in each version. kwargs that apply to exporting to PDF
+			in ArcMap and ArcGIS Pro apply here.
+		:param out_path: The full path to export the document to. Will be modified in the case of layout="ALL". New generated
+			paths will be returned by the function as a list.
+		:param layout:  PRO only, safely ignored in ArcMap. The mp.Layout or amaptor.Layout object to export, or the keyword "ALL"
+		:param **kwargs: accepts the set of parameters that works for both arcmap and arcgis pro. resolution, image_quality,
+			image_compression, embed_fonts, layers_attributes, georef_info, jpeg_compression_quality. In the future,
+			this may be reengineered to translate parameters with common goals but different names
+		:return:
+		"""
+		new_kwargs = {}
+		allowed_kwargs = ["resolution", "image_quality", "image_compression", "embed_fonts", "layers_attributes", "georef_info", "jpeg_compression_quality"]
+		for kwarg in allowed_kwargs:
+			if kwarg in kwargs.keys():
+				new_kwargs[kwarg] = kwargs[kwarg]  # assign any keys in the kwargs that are valid to a new kwarg dict, tossing out others.
+
+		return self._export(out_path, layout=layout, mapping_function="ExportToPDF", mp_function="exportToPDF", layout_function="export_to_pdf", extension="pdf", **new_kwargs)
+
 	def to_package(self, output_file, **kwargs):
 		"""
 			Though it's not normally a mapping method, packaging concepts need translation between the two versions, so
