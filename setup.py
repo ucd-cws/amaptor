@@ -38,13 +38,7 @@ except ImportError:
 try:
 	from amaptor.version import __version__, __author__
 except RuntimeError:  # added so it can be installed with setup.py develop when signed in as an admin that's not signed into Portal in ArcGIS Pro
-	__version__ = "0.1.0.1"
 	__author__ = "nickrsan"
-
-if ON_RTD:
-	package_data = {}
-else:
-	package_data = {"package_data": {"amaptor": [{"templates": ["*"]}]}}
 
 setup(name="amaptor",
 	version=__version__,
@@ -60,11 +54,9 @@ setup(name="amaptor",
 	Documentation can be found at http://amaptor.readthedocs.io
 	""",
 	packages=['amaptor', 'amaptor.classes', ],
-	install_requires=[],
+	requires=["arcpy"],
 	author=__author__,
 	author_email="nrsantos@ucdavis.edu",
 	url='https://github.com/ucd-cws/amaptor',
 	include_package_data=include_package_data,
-	**package_data
-	)
-
+)
