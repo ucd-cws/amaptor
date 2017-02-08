@@ -1,1 +1,2 @@
 recursive-include amaptor/templates *
+recursive-include amaptor/classes *
