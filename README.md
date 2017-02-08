@@ -28,6 +28,10 @@ You'll notice that some parts of the API are new. I've added convenience functio
 out the core API for normal calls as well. I plan to follow the ArcGIS Pro API where possible (but lowercasing and underscoring names)
 to keep concepts similar.
 
+## Installation
+amaptor is available on PyPI and can be installed via `pip install amaptor` or by cloning this repository and running
+`setup.py install`
+
 ## Limitations
 When using amaptor with existing files, you should plan to have template documents for each version, because ArcGIS Pro projects cannot be
 imported back into ArcMap. If you provide an MXD on ArcGIS Pro, amaptor will import it into an ArcGIS Pro project automatically,
@@ -52,5 +56,6 @@ This approach will give the best results, though isn't viable in all situations 
 ArcGIS Pro Projects on a machine with ArcMap). Still, code that works with templates for the current platform
 or creates and manages its own files will work fine with only that slight adjustment.
 
+## Credits and License
 By [Nick Santos](https://watershed.ucdavis.edu/people/nick-santos), UC Davis Center for Watershed Sciences and written for a project funded by the State of California.
 Licensed under the MIT License.
