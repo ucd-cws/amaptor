@@ -182,6 +182,10 @@ class Project(object):
 				new_map = Map(self, l_map)
 				self.maps.append(new_map)
 				return new_map
+		else:  # if it's not found
+			raise MapNotFoundError("Map was inserted, but could not be found after insertion. If you provided a custom" \
+								   "template, check that the name you provided for template_df_name matches the name of " \
+								   "the data frame you want to use from the map document.")
 
 	def check_layout_name(self, name):
 		"""

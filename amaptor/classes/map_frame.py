@@ -3,6 +3,7 @@ log = logging.getLogger("amaptor")
 
 from amaptor.version_check import mp
 from amaptor.errors import *
+#from amaptor.classes import map
 
 class MapFrame(object):
 	def __init__(self, map_frame_object, layout):
@@ -15,6 +16,9 @@ class MapFrame(object):
 			pass  # this is ok, because if we just created the frame, it may not be findable (as when we import a layout), but it should be set later
 
 	def _set_map(self, amaptor_map):
+
+		#if not isinstance(amaptor_map, map.Map):
+		#	raise MapNotFoundError("Provided map is either None or not an instance of amaptor.classes.Map")
 
 		self._map = amaptor_map
 		self._map._index_frames()  # have it reindex all of the frames and maps it has

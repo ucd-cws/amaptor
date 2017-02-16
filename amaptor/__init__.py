@@ -14,4 +14,6 @@ from amaptor.classes.layout import Layout
 from amaptor.classes.project import Project
 from amaptor.classes.map import Map
 
+from . import functions
+
 
