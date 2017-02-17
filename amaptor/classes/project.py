@@ -131,6 +131,10 @@ class Project(object):
 
 	@property
 	def map_names(self):
+		"""
+			A convenience function to get a list of map names
+		:return:
+		"""
 		return [l_map.name for l_map in self.maps]
 
 	def find_map(self, name):
