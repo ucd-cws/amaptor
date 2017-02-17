@@ -129,6 +129,10 @@ class Project(object):
 		"""
 		return self.get_active_map()
 
+	@property
+	def map_names(self):
+		return [l_map.name for l_map in self.maps]
+
 	def find_map(self, name):
 		"""
 			Given a map name, returns the map object or raises MapNotFoundError
@@ -239,6 +243,10 @@ class Project(object):
 				new_layout = Layout(layout, self)
 				self.layouts.append(new_layout)
 				return new_layout
+		else:
+			raise LayoutNotFoundError("Layout was inserted, but could not be found after insertion. If you provided a custom" \
+								   "template, check that the name you provided for template_name matches the name of " \
+								   "the original mxd file from which you derived the layout you're importing")
 
 	def get_active_map(self, use_pro_backup=True):
 		"""
