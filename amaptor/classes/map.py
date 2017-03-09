@@ -77,7 +77,7 @@ class Map(object):
 		if PRO:
 			self.map_object.addLayer(add_layer, add_position)
 		else:
-			arcpy.mapping.addLayer(self.map_object, add_layer, add_position)
+			arcpy.mapping.AddLayer(self.map_object, add_layer, add_position)
 
 		self.layers.append(add_layer)
 
@@ -200,7 +200,7 @@ class Map(object):
 		"""
 		layers = []
 		for layer in self.layers:
-			if path is not None and layer.dataSource == path:
+			if path is not None and layer.supports("DATASOURCE") and layer.dataSource == path:
 				if find_all:
 					layers.append(layer)
 				else:

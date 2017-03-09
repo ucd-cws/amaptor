@@ -3,7 +3,8 @@ import tempfile
 
 import arcpy
 
-from amaptor import log, mp, PRO, mapping, LayerNotFoundError
+from amaptor import log, mp, PRO, mapping
+from amaptor.errors import LayerNotFoundError, NotSupportedError
 from amaptor.constants import _PRO_BLANK_TEMPLATE
 
 
@@ -54,6 +55,7 @@ def make_layer_with_file_symbology(feature_class, layer_file, layer_name=None):
 	:param layer_name:
 	:return:
 	"""
+
 	layer = None
 	if PRO:
 		layer_file = mp.LayerFile(layer_file)
@@ -64,6 +66,8 @@ def make_layer_with_file_symbology(feature_class, layer_file, layer_name=None):
 
 	if layer is None:
 		raise LayerNotFoundError("No layer available for copying from layer file")
+	elif not layer.supports("DATASOURCE"):
+		raise NotSupportedError("Provided layer file doesn't support accessing or setting the data source")
 
 	if PRO:
 		layer.dataSource = feature_class

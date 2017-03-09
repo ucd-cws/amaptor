@@ -65,3 +65,12 @@ class EmptyFieldError(ValueError):
 	def __init__(self, field, description, **kwargs):
 		log.error("{} is empty or missing. {}".format(field, description))
 		super(EmptyFieldError, self).__init__(**kwargs)
+
+class NotSupportedError(NotImplementedError):
+	"""
+		Raised when a feature is not supported by ArcGIS itself.
+	"""
+	def __init__(self, message, **kwargs):
+		log.error("Not Supported {}.".format(messages))
+		super(NotSupportedError, self).__init__(**kwargs)
+	# for use when a specific mapping function not implemented
