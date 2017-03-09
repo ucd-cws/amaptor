@@ -68,12 +68,12 @@ def make_layer_with_file_symbology(feature_class, layer_file, layer_name=None):
 	if PRO:
 		layer.dataSource = feature_class
 	else:
-		with arcpy.Describe(feature_class) as desc:
-			if desc.extension and desc.extension != "":
-				name = "{}.{}".format(desc.baseName, desc.extension)
-			else:
-				name = desc.baseName
-			layer.replaceDataSource(desc.path, get_workspace_type(feature_class), name)
+		desc = arcpy.Describe(feature_class)
+		if desc.extension and desc.extension != "":
+			name = "{}.{}".format(desc.baseName, desc.extension)
+		else:
+			name = desc.baseName
+		layer.replaceDataSource(desc.path, get_workspace_type(feature_class), name)
 	if layer_name:
 		layer.name = layer_name
 
@@ -106,20 +106,20 @@ def get_workspace_type(dataset_path):
 
 	dataset_desc = arcpy.Describe(dataset_path)
 	workspace = dataset_desc.path
+	workspace_desc = arcpy.Describe(workspace)
 
-	with arcpy.Describe(workspace) as workspace_desc:
-		if workspace_desc.workspaceFactoryProgID in prog_id_mapping:  # if we have the specific name for it here, return that first
-			return prog_id_mapping[workspace_desc.workspaceFactoryProgID]
-		elif workspace_desc.workspaceType == "FileSystem":
-			if dataset_desc.extension == "shp":
-				return "SHAPEFILE_WORKSPACE"
-			elif dataset_desc.extension in ("xls", "xlsx"):
-				return "EXCEL_WORKSPACE"
-			elif dataset_desc.extension in ("tab", "csv", "txt"):  # probably not the best way to handle this
-				return "TEXT_WORKSPACE"
-			elif dataset_desc.dataType == "Raster":
-				return "RASTER_WORKSPACE"
-		elif dataset_desc.dataType == "Tin":
-			return "TIN_WORKSPACE"
-		elif workspace_desc.workspaceFactoryProgID == "":
-			return "SHAPEFILE_WORKSPACE"  # if we get to here without returning, it's likely a shapefile - there are a few items missing from this conditional - CAD, VPF, etc
+	if workspace_desc.workspaceFactoryProgID in prog_id_mapping:  # if we have the specific name for it here, return that first
+		return prog_id_mapping[workspace_desc.workspaceFactoryProgID]
+	elif workspace_desc.workspaceType == "FileSystem":
+		if dataset_desc.extension == "shp":
+			return "SHAPEFILE_WORKSPACE"
+		elif dataset_desc.extension in ("xls", "xlsx"):
+			return "EXCEL_WORKSPACE"
+		elif dataset_desc.extension in ("tab", "csv", "txt"):  # probably not the best way to handle this
+			return "TEXT_WORKSPACE"
+		elif dataset_desc.dataType == "Raster":
+			return "RASTER_WORKSPACE"
+	elif dataset_desc.dataType == "Tin":
+		return "TIN_WORKSPACE"
+	elif workspace_desc.workspaceFactoryProgID == "":
+		return "SHAPEFILE_WORKSPACE"  # if we get to here without returning, it's likely a shapefile - there are a few items missing from this conditional - CAD, VPF, etc
