@@ -26,3 +26,16 @@ class Layout(object):
 
 	def export_to_pdf(self, out_path, **kwargs):
 		self._layout_object.exportToPDF(out_path, **kwargs)
+
+	def replace_text(self, text, replacement):
+		"""
+			Single layout analogue of Project.replace_text. Given a string and a replacement value, replaces all
+			instances of that string in all text elements in the layout. Useful for having template strings in a map
+			document
+		:param text:
+		:param replacement:
+		:return:
+		"""
+
+		for elm in self._layout_object.listElements("TEXT_ELEMENT"):
+			elm.text = elm.text.replace(text, replacement)

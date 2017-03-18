@@ -307,3 +307,22 @@ class Project(object):
 			arcpy.PackageProject_management(self.path, output_file, summary=summary, tags=tags, **kwargs)
 		else:
 			arcpy.PackageMap_management(self.path, output_file, summary=summary, tags=tags)
+
+	def replace_text(self, text, replacement):
+		"""
+			Given a string and a replacement value, finds all instances (in the current map document or project)
+			of that text in text elements and titles, and replaces those instances with the new value.
+			Useful for creating your own variables like {species} or {field_id} in map templates.
+			Careful when using this - in Pro, it will search all Layouts and replace the string.
+			If you are concerned and want single layout behavior, use the same function on the Layout class.
+		:param text:
+		:param replacement:
+		:return:
+		"""
+
+		if ARCMAP:
+			for elm in arcpy.mapping.ListLayoutElements(self.primary_document, "TEXT_ELEMENT"):
+				elm.text = elm.text.replace(text, replacement)
+		else:
+			for layout in self.layouts:  # in pro, iterate through Layout objects instead and replace in all
+				layout.replace_text(text, replacement)
