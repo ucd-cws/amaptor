@@ -11,7 +11,7 @@ conceptualized isn't meant to guarantee complete functionality in both cases, bu
 provide a "good enough" for most uses compatibility layer that gets many tasks done in one codebase.
 You may still need to write code against specific versions, especially while this project is new.
 
-Documentation of the full API can be found [online at Read the Docs](https://amaptor.readthedocs.io), but here's an example that something trivial (copying a layer),
+**Documentation** of the full API can be found [online at Read the Docs](https://amaptor.readthedocs.io), but here's a trivial example (copying a layer),
 but uses some of the core methods:
 
 ```python
@@ -57,5 +57,5 @@ ArcGIS Pro Projects on a machine with ArcMap). Still, code that works with templ
 or creates and manages its own files will work fine with only that slight adjustment.
 
 ## Credits and License
-By [Nick Santos](https://watershed.ucdavis.edu/people/nick-santos), UC Davis Center for Watershed Sciences and written for a project funded by the State of California.
+By [Nick Santos](https://watershed.ucdavis.edu/people/nick-santos), UC Davis Center for Watershed Sciences and written for projects funded by the State of California.
 Licensed under the MIT License.
