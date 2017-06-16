@@ -3,7 +3,7 @@ import tempfile
 
 import arcpy
 
-from amaptor import log, mp, PRO, mapping
+from amaptor.version_check import log, mp, PRO, mapping
 from amaptor.errors import LayerNotFoundError, NotSupportedError
 from amaptor.constants import _PRO_BLANK_TEMPLATE
 
@@ -48,7 +48,7 @@ def _import_mxd_to_new_pro_project(mxd, blank_pro_template=_PRO_BLANK_TEMPLATE, 
 
 def make_layer_with_file_symbology(feature_class, layer_file, layer_name=None):
 	"""
-		Given a feature class and a template layer file with symbology, returns a new Layer object that has the layer
+		Given a feature class or raster and a template layer file with symbology, returns a new Layer object that has the layer
 		from the layer file with the feature class as its data source. Optionally, layer can be renamed with layer_name
 	:param feature_class:
 	:param layer_file:
@@ -59,7 +59,7 @@ def make_layer_with_file_symbology(feature_class, layer_file, layer_name=None):
 	layer = None
 	if PRO:
 		layer_file = mp.LayerFile(layer_file)
-		for layer in layer_file.listLayers():
+		for layer in layer_file.listLayers():  # gets the first layer in the layer file
 			break
 	else:
 		layer = mapping.Layer(layer_file)
@@ -73,7 +73,7 @@ def make_layer_with_file_symbology(feature_class, layer_file, layer_name=None):
 		layer.dataSource = feature_class
 	else:
 		desc = arcpy.Describe(feature_class)
-		if desc.extension and desc.extension != "":
+		if desc.extension and desc.extension != "":  # get the name with extension for replacing the data source
 			name = "{}.{}".format(desc.baseName, desc.extension)
 		else:
 			name = desc.baseName

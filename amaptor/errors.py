@@ -12,26 +12,36 @@ class MapExists(FileExistsError):
 		Raised when a map or data frame already exists because a new one cannot be added with the same name
 	"""
 	def __init__(self, map_name, **kwargs):
-		log.error("Map with name {} already exists.".format(map_name))
+		self.map_name = map_name
 		super(MapExists, self).__init__(**kwargs)
+
+	def __repr__(self):
+		log.error("Map with name {} already exists.".format(self.map_name))
 
 
 class LayoutExists(FileExistsError):
 	"""
 		Raised when a layout (in Pro only) already exists because a new one cannot be added with the same name
 	"""
-	def __init__(self, map_name, **kwargs):
-		log.error("Layout with name {} already exists.".format(map_name))
+	def __init__(self, layout_name, **kwargs):
+		self.layout_name = layout_name
 		super(LayoutExists, self).__init__(**kwargs)
+
+	def __repr__(self):
+		log.error("Layout with name {} already exists.".format(self.layout_name))
 
 
 class MapNotFoundError(FileNotFoundError):
 	"""
 		Raised when a process is trying to find a specific map and it is not found.
 	"""
-	def __init__(self, map_name, **kwargs):
-		log.error("Map with name {} does not exist.".format(map_name))
+	def __init__(self, map_name, extra_text=None, **kwargs):
+		self.map_name = map_name
+		self.extra_text = extra_text
 		super(MapNotFoundError, self).__init__(**kwargs)
+
+	def __repr__(self):
+		log.error("Map with name {} does not exist. {}".format(self.map_name, self.extra_text))
 
 
 class LayoutNotFoundError(FileNotFoundError):
@@ -39,8 +49,11 @@ class LayoutNotFoundError(FileNotFoundError):
 		Raised when a process is trying to find a specific layout (Pro only) and it is not found.
 	"""
 	def __init__(self, layout_name, **kwargs):
-		log.error("Layout with name {} does not exist.".format(layout_name))
+		self.layout_name = layout_name
 		super(LayoutNotFoundError, self).__init__(**kwargs)
+
+	def __repr__(self):
+		log.error("Layout with name {} does not exist.".format(self.layout_name))
 
 
 class MapNotImplementedError(NotImplementedError):

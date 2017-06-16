@@ -6,10 +6,10 @@ import arcpy
 
 from amaptor.version_check import PRO, mapping, mp
 from amaptor.errors import *
-from amaptor.functions import reproject_extent, log
 from amaptor.functions import make_layer_with_file_symbology, reproject_extent
 from amaptor.classes.map_frame import MapFrame
 from amaptor.classes.layout import Layout
+from amaptor.classes.layer import Layer
 
 class Map(object):
 	"""
@@ -48,10 +48,12 @@ class Map(object):
 
 
 	def _get_layers_pro(self):
-		self.layers = self.map_object.listLayers()
+		self._arcgis_layers = self.map_object.listLayers()
+		self.layers = [Layer(layer) for layer in self._arcgis_layers]
 
 	def _get_layers_arcmap(self):
-		self.layers = mapping.ListLayers(self.project.map_document)
+		self._arcgis_layers = mapping.ListLayers(self.project.map_document)
+		self.layers = [Layer(layer) for layer in self._arcgis_layers]
 
 	def list_layers(self):
 		"""
@@ -74,12 +76,18 @@ class Map(object):
 			as those available on addLayer.
 		:return: None
 		"""
-		if PRO:
-			self.map_object.addLayer(add_layer, add_position)
+		if isinstance(add_layer, Layer):  # if it's an amaptor layer
+			new_layer = add_layer.layer_object
 		else:
-			arcpy.mapping.AddLayer(self.map_object, add_layer, add_position)
+			new_layer = add_layer
 
-		self.layers.append(add_layer)
+		if PRO:
+			self.map_object.addLayer(new_layer, add_position)
+		else:
+			arcpy.mapping.AddLayer(self.map_object, new_layer, add_position)
+
+		self.list_layers() # make sure the internal layer list is up to date
+
 
 	def insert_layer(self, reference_layer, insert_layer_or_layerfile, insert_position="BEFORE"):
 		"""
@@ -90,6 +98,21 @@ class Map(object):
 		 	options correspond to those available on insertLayer in arcpy.mapping and arcpy.mp
 		:return: None
 		"""
+
+		if isinstance(insert_layer_or_layerfile, Layer):
+			insert_layer_or_layerfile = insert_layer_or_layerfile.layer_object
+		else:
+			if PRO:
+				layer_type = arcpy._mp.Layer
+			else:
+				layer_type = arcpy._mapping.Layer
+
+			if not isinstance(insert_layer_or_layerfile, layer_type):
+				raise(RuntimeError, "provided object is not an Layer instance and can't be added to a map")
+
+		if isinstance(reference_layer, Layer):
+			reference_layer = reference_layer.layer_object
+
 		if PRO:
 			self.map_object.insertLayer(reference_layer, insert_layer_or_layerfile=insert_layer_or_layerfile, insert_position=insert_position)
 		else:
@@ -137,22 +160,25 @@ class Map(object):
 		else:
 			self.map_object.extent = reproject_extent(extent_object, self.map_object.extent)
 
-	def zoom_to_layer(self, layer, set_layout="ALL"):
+	def zoom_to_layer(self, layer, set_frame="ALL"):
 		"""
 			Given a name of a layer as a string or a layer object, zooms the map extent to that layer
 			WARNING: In Pro, see the parameter information for set_layout on the set_extent method for a description
 			of how this option behaves. Since maps don't correspond 1:1 to layouts, in some cases multiple layouts will
 			be changed.
 		:param layer: can be a string name of a layer, or a layer object
-		:param set_layout: PRO ONLY, but ignored in ArcMap, so can be safe to use. This parameter controls which layouts
-			are changed by the Zoom to Layer. By default, all linked layouts are updated. If an arcpy.mp.Layout instance
-			or an amaptor.Layout instance is provided, it zooms only that map frame to the layer.
+		:param set_layout: PRO ONLY, but ignored in ArcMap, so can be safe to use. This parameter controls which map frames
+			are changed by the Zoom to Layer. By default, all linked map frames are updated. If an arcpy.mp.MapFrame instance
+			or an amaptor.MapFrame instance is provided, it zooms only that map frame to the layer.
 		:return: None
 		"""
+		if isinstance(layer, Layer):
+			layer = layer.layer_object  # get the actual layer object for the rest of this if an amaptor Layer is passed in.
+
 		if PRO:
 			if not isinstance(layer, arcpy._mp.Layer):
 				layer = self.find_layer(name=layer)
-			self.set_extent(arcpy.Describe(layer.dataSource).extent)
+			self.set_extent(arcpy.Describe(layer.dataSource).extent, set_frame=set_frame)
 		else:
 			if not isinstance(layer, arcpy._mapping.Layer):
 				layer = self.find_layer(name=layer)
@@ -192,7 +218,8 @@ class Map(object):
 	def find_layer(self, name=None, path=None, find_all=False):
 		"""
 			Given the name OR Path of a layer in the map, returns the layer object. If both are provided, returns based on path.
-			If multiple layers with the same name/path exist, returns the first one, unless find_all is True - then it returns a list with all instances
+			If multiple layers with the same name/path exist, returns the first one, unless find_all is True - then it returns a list with all instances.
+			Automatically converted to work with new Layer object because self.layers uses them
 		:param name:
 		:param path:
 		:param find_all:

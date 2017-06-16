@@ -40,7 +40,7 @@ class MapFrame(object):
 
 	@property
 	def map(self):
-		return self._map
+		return self._map_frame_object.map
 
 	@map.setter
 	def map(self, value):

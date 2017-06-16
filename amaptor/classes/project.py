@@ -137,6 +137,38 @@ class Project(object):
 		"""
 		return [l_map.name for l_map in self.maps]
 
+	@property
+	def default_geodatabase(self):
+		"""
+			Returns the Project's default geodatabase in Pro, and the current workspace (arcpy.env.workspace) in ArcMap.
+			If arcpy.env.workspace is None, creates a GDB in same folder as map document and returns that value, to ensure
+			that this function always returns a usable workspace. If a GDB is created, this function does NOT set arcpy.env.workspace
+			to that, so as not to interfere with other operations. Do that explicitly if that behavior is desired.
+		:return:
+		"""
+		if PRO:
+			return self.arcgis_pro_project.defaultGeodatabase
+		else:
+			if arcpy.env.workspace is not None:
+				return arcpy.env.workspace
+			else:
+				folder_path = os.path.split(self.path)[0]
+				name = "amaptor_default_gdb"
+				arcpy.CreateFileGDB_management(folder_path, name)
+				return os.path.join(folder_path, name)
+
+	@default_geodatabase.setter
+	def default_geodatabase(self, value):
+		"""
+			Sets the default geodatabase in Pro and sets arcpy.env.workspace in ArcMap
+		:param value:
+		:return:
+		"""
+		if PRO:
+			self.arcgis_pro_project.defaultGeodatabase = value
+		else:
+			arcpy.env.workspace = value
+
 	def find_map(self, name):
 		"""
 			Given a map name, returns the map object or raises MapNotFoundError
@@ -166,7 +198,9 @@ class Project(object):
 	def new_map(self, name, template_map=os.path.join(_TEMPLATES, "arcmap", "pro_import_map_template.mxd"), template_df_name="_rename_template_amaptor"):
 		"""
 			PRO ONLY. Creates a new map in the current project using a hack (importing a blank map document, and renaming data frame)
-			Warning: Only works in Pro due to workaround.
+			Warning: Only works in Pro due to workaround. There isn't a way to add a data frame from arcpy.mapping.
+			In the future, this could potentially work in arcmap by transparently working with a separate map document
+			in the background (creating a project, map, and layout for those items and linking them into this project).
 		:param name: The name to give the imported map
 		:param template_map: The map document to import. If we're just going with a blank new map, leave as default. To
 							import some other template as your base, provide a path to a document importable to ArcGIS Pro'
@@ -191,7 +225,7 @@ class Project(object):
 				self.maps.append(new_map)
 				return new_map
 		else:  # if it's not found
-			raise MapNotFoundError("Map was inserted, but could not be found after insertion. If you provided a custom" \
+			raise MapNotFoundError(template_df_name, "Map was inserted, but could not be found after insertion. If you provided a custom" \
 								   "template, check that the name you provided for template_df_name matches the name of " \
 								   "the data frame you want to use from the map document.")
 

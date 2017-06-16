@@ -2,10 +2,13 @@ import logging
 log = logging.getLogger("amaptor")
 
 from amaptor.classes.map_frame import MapFrame
-
+from amaptor.version_check import PRO
 class Layout(object):
 	"""
-		Replicates Layouts so that we can do some nice things behind the scenes
+		Replicates Layouts so that we can do some nice things behind the scenes.
+
+		In ArcMap, a single layout is created - that way, a layout can safely be retrieved for all documents and modifying
+		properties of a layout modifies corresponding map document properties.
 	"""
 
 	def __init__(self, layout_object, project):
@@ -15,13 +18,30 @@ class Layout(object):
 
 	@property
 	def name(self):
-		return self._layout_object.name
+		"""
+			Corresponds to the name of a layout in Pro and the Map Document's "title" property in ArcMap
+		:return:
+		"""
+		if PRO:
+			return self._layout_object.name
+		else:
+			return self.project.primary_document.title
 
 	@name.setter
 	def name(self, value):
-		self._layout_object.name = value
+		if PRO:
+			self._layout_object.name = value
+		else:
+			self.project.primary_document.title = value
 
 	def export_to_png(self, out_path, resolution=300):
+		"""
+			Currently Pro only - needs refactoring to support ArcMap and Pro (should export map document in ArcMap).
+			Also needs refactoring to combine Map and Layout export code.
+		:param out_path:
+		:param resolution:
+		:return:
+		"""
 		self._layout_object.exportToPNG(out_path, resolution)
 
 	def export_to_pdf(self, out_path, **kwargs):
