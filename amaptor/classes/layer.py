@@ -4,7 +4,8 @@ log = logging.getLogger("amaptor")
 import arcpy
 
 from amaptor.version_check import PRO, ARCMAP, mapping, mp
-from amaptor.errors import NotSupportedError
+from amaptor.classes.map import Map
+from amaptor.errors import NotSupportedError, EmptyFieldError
 from amaptor.functions import get_workspace_type
 
 class Layer(object):
@@ -104,6 +105,10 @@ class Layer(object):
 				raise NotSupportedError("Cannot retrieve symbology from the object provided. Accepted types are amaptor.Layer, arcpy.mp.Symbology, and arcpy.mp.Layer. You provided {}".format(type(symbology)))
 			self.layer_object.symbology = new_symbology
 		else:  # if ArcMap, we need to do some workaround
+
+			if self.map is None or not isinstance(self.map, Map):
+				raise EmptyFieldError("Layer is not attached to an amaptor.Map instance - cannot change symbology. See documentation.")
+
 			if isinstance(symbology, Layer):
 				source_data = symbology.layer_object
 			elif isinstance(symbology, arcpy.mapping.Layer):
