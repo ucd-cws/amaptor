@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.1.2.1
+Added ability to get and set layer symbology
+
 ## 0.1.2
 Added Layer class and refactored *most* other items that return layer object or use layer objects to handle receiving them and to return them
 Small changes to how certain errors print messages (they don't automatically anymore - only if you print the error)

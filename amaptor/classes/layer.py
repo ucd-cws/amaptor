@@ -12,10 +12,11 @@ class Layer(object):
 		This object is new, and existing code in amaptor hasn't yet been transitioned to using amaptor layers instead of
 		native layers. Some amaptor functions *return* native layers, so care should be used when transitioning.
 	"""
-	def __init__(self, layer_object_or_file, name=None):
+	def __init__(self, layer_object_or_file, name=None, map_object=None):
 		"""
 		:param layer_object_or_file: an actual instance of a layer object, or a layer file path
 		:param name: used when loading from a file in Pro to select the layer of interest
+		:param map: the map this layer belongs to - optional but used when updating symbology in ArcMap
 		"""
 		self.layer_object = None
 
@@ -31,6 +32,8 @@ class Layer(object):
 					break
 		else:
 			self.layer_object = mapping.Layer(layer_object_or_file)
+
+		self.map = map_object
 
 	@property
 	def name(self):
@@ -62,6 +65,56 @@ class Layer(object):
 			else:
 				name = desc.baseName
 			self.layer_object.replaceDataSource(desc.path, get_workspace_type(new_source), name)
+
+	@property
+	def symbology(self):
+		return self.layer_object.symbology
+
+	@symbology.setter
+	def symbology(self, symbology):
+		"""
+			Updates layer symbology based on copying from:
+			 1) amaptor Layer object
+			 2) arcpy.mapping/arcpy.mp Layer objects
+			 3) symbology object. Symbology objects only exist in Pro, so take care when using them for cross-platform support.
+
+			raises NotSupportedError if the provided object cannot be copied from. If you wish to copy symbology from a Layer
+			file, open it and retrieve the appropriate Layer object and pass it here.
+
+			IMPORTANT: If you are setting symbology using this method in ArcMap, you MUST attach an amaptor.Map instance
+			 representing the Data Frame that this layer is within as this_layer.map. Example usage
+
+			```
+			  	# my_map is an amaptor.Map object instance
+			  	my_layer = my_map.find_layer("layer_name")
+			  	symbol_layer = my_map.find_layer("layer_with_symbology_to_copy")
+			  	my_layer.map = my_map  # set the map attribute so it knows what data frame to use. Should be an amaptor.Map object, not an actual data frame.
+			  	my_layer.symbology = symbol_layer # copies symbology from symbol_layer to my_layer
+			```
+
+		:param symbology: Symbology can be a symbology object or a layer to copy it from
+		:return:
+		"""
+		if PRO:
+			if isinstance(symbology, arcpy._mp.Symbology):
+				new_symbology = symbology
+			elif isinstance(symbology, arcpy._mp.Layer) or isinstance(symbology, Layer):  # if it's an amaptor layer, and we're Pro, copy it from there
+				new_symbology = symbology.symbology
+			else:
+				raise NotSupportedError("Cannot retrieve symbology from the object provided. Accepted types are amaptor.Layer, arcpy.mp.Symbology, and arcpy.mp.Layer. You provided {}".format(type(symbology)))
+			self.layer_object.symbology = new_symbology
+		else:  # if ArcMap, we need to do some workaround
+			if isinstance(symbology, Layer):
+				source_data = symbology.layer_object
+			elif isinstance(symbology, arcpy.mapping.Layer):
+				source_data = symbology
+			else:
+				raise NotSupportedError("Cannot retrieve symbology from the object provided. Accepted types are amaptor.Layer and arcpy.mapping.Layer. You provided {}".format(type(symbology)))
+
+			arcpy.mapping.UpdateLayer(data_frame=self.map.map_object,
+									  update_layer=self.layer_object,
+									  source_layer=source_data,
+									  symbology_only=True)
 
 	def __getter__(self, key):
 		"""
