@@ -4,7 +4,6 @@ log = logging.getLogger("amaptor")
 import arcpy
 
 from amaptor.version_check import PRO, ARCMAP, mapping, mp
-from amaptor.classes.map import Map
 from amaptor.errors import NotSupportedError, EmptyFieldError
 from amaptor.functions import get_workspace_type
 
@@ -106,6 +105,7 @@ class Layer(object):
 			self.layer_object.symbology = new_symbology
 		else:  # if ArcMap, we need to do some workaround
 
+			from amaptor.classes.map import Map  # if we put this at the top, we get a circular import - need it to run at runtime for checking - this should be refactored, but not immediately sure how since these classes are mostly appropriately isolated, but bidrectionally reference each other
 			if self.map is None or not isinstance(self.map, Map):
 				raise EmptyFieldError("Layer is not attached to an amaptor.Map instance - cannot change symbology. See documentation.")
 
