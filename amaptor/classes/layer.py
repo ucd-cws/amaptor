@@ -107,7 +107,7 @@ class Layer(object):
 
 			from amaptor.classes.map import Map  # if we put this at the top, we get a circular import - need it to run at runtime for checking - this should be refactored, but not immediately sure how since these classes are mostly appropriately isolated, but bidrectionally reference each other
 			if self.map is None or not isinstance(self.map, Map):
-				raise EmptyFieldError("Layer is not attached to an amaptor.Map instance - cannot change symbology. See documentation.")
+				raise EmptyFieldError("map", "Layer is not attached to an amaptor.Map instance - cannot change symbology. See documentation.")
 
 			if isinstance(symbology, Layer):
 				source_data = symbology.layer_object

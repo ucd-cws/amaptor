@@ -76,8 +76,12 @@ class LayerNotFoundError(ValueError):
 
 class EmptyFieldError(ValueError):
 	def __init__(self, field, description, **kwargs):
-		log.error("{} is empty or missing. {}".format(field, description))
+		self.description = description
+		self.field = field
 		super(EmptyFieldError, self).__init__(**kwargs)
+
+	def __repr__(self):
+		log.error("{} is empty or missing. {}".format(self.field, self.description))
 
 class NotSupportedError(NotImplementedError):
 	"""
