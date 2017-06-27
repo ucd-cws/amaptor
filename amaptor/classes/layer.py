@@ -5,19 +5,35 @@ import arcpy
 
 from amaptor.version_check import PRO, ARCMAP, mapping, mp
 from amaptor.errors import NotSupportedError, EmptyFieldError
-from amaptor.functions import get_workspace_type
+from amaptor.functions import get_workspace_type, get_workspace_factory_of_dataset
+from amaptor.constants import _BLANK_FEATURE_LAYER, _BLANK_RASTER_LAYER
 
 class Layer(object):
 	"""
-		This object is new, and existing code in amaptor hasn't yet been transitioned to using amaptor layers instead of
-		native layers. Some amaptor functions *return* native layers, so care should be used when transitioning.
+		This object corresponds to arcpy Layers - it theoretically supports the full range of API calls for Layer objects
+		but with a major caveat that only some of that has been specifically written for amaptor. The remaining calls
+		get passed straight through to the underlying Layer object, and this behavior is subjec to change as more of the
+		object is officially supported. When using amaptor Layers (and the rest of amaptor) take note of the version
+		you are using so that if the API changes (it will), you can continue to run your code. We'll try to make sensible
+		evolutions that help with things and harm as little prior code as possible.
+
+		This object is new and not as well-tested. Existing amaptor functions should now return amaptor.Layer objects,
+		but the ability to work with either amaptor layers or ArcGIS native layers is preserved in many cases throughout
+		code, both for backwards compatibility and for future convenience, where you might want to
 	"""
-	def __init__(self, layer_object_or_file, name=None, map_object=None):
+	def __init__(self, layer_object_or_file, name=None, map_object=None, template_layer=None):
 		"""
-		:param layer_object_or_file: an actual instance of a layer object, or a layer file path
+			Create a Layer object by providing an ArcGIS layer instance, an ArcGIS layer file, or a data source.
+
+		:param layer_object_or_file: an actual instance of a layer object, a valid data source (feature class, raster, etc) or a layer file path (layer file paths work best in Pro, which supports multiple layers in a single file - for cross platform usage, open the layer file and get the Layer object you need, then make an amaptor layer with that)
 		:param name: used when loading from a file in Pro to select the layer of interest
 		:param map: the map this layer belongs to - optional but used when updating symbology in ArcMap
+		:param template_layer: This is used in Pro when constructing a layer from a data source - it will start automatically
+					with this layer's properties, symbology, etc. In future versions, we hope to have it autodetect the most appropriate
+					template layer that comes with amaptor, but for now, this is an option so that you can get the right properties
+					immediately.
 		"""
+		self.init = False  # we'll set to True when done with init - provides a flag when creating a new layer from scratch in Pro, that we're loading a blank layer
 		self.layer_object = None
 
 		if PRO and isinstance(layer_object_or_file, arcpy._mp.Layer):
@@ -25,11 +41,33 @@ class Layer(object):
 		elif ARCMAP and isinstance(layer_object_or_file, mapping.Layer):
 			self.layer_object = layer_object_or_file
 		elif PRO:  # otherwise, assume it's a path and run the import for each.
-			layer_file = mp.LayerFile(layer_object_or_file)
-			for layer in layer_file.listLayers():  # gets the specified layer from the layer file OR the last one
-				self.layer_object = layer
-				if name and layer.name == name:
-					break
+			if layer_object_or_file.endswith(".lyr") or layer_object_or_file.endswith(".lyrx"):
+				layer_file = mp.LayerFile(layer_object_or_file)
+				for layer in layer_file.listLayers():  # gets the specified layer from the layer file OR the last one
+					self.layer_object = layer
+					if name and layer.name == name:
+						break
+			else:  # handle the case of providing a data source of some sort - TODO: Needs to do more checking and raise appropriate exceptions (instead of raising ArcGIS' exceptions)
+				# In Pro this is complicated - we can't initialize Layers directly, so we'll use a template for the appropriate data type, then modify it with our information
+				desc = arcpy.Describe(layer_object_or_file)
+				if not template_layer:
+					if desc.dataType in ("FeatureClass", "ShapeFile"):
+						layer_file = _BLANK_FEATURE_LAYER
+					elif desc.dataType in ("RasterDataset", "RasterBand"):
+						layer_file = _BLANK_RASTER_LAYER
+					else:
+						raise NotSupportedError(
+							"This type of dataset isn't supported for initialization in amaptor via ArcGIS Pro")
+				else:
+					layer_file = template_layer
+
+					avail_layer = arcpy.mp.LayerFile(layer_file)
+					arcgis_template_layer = avail_layer.listLayers()[0]
+
+				self.layer_object = arcgis_template_layer  # set the layer object to the template
+				self._set_data_source(layer_object_or_file)  # now set the data source to be the actual source data - self.data_source does the annoying magic behind this in Pro
+				self.name = desc.name  # set the name to the dataset name, as would be typical - just a simple default
+				del desc
 		else:
 			self.layer_object = mapping.Layer(layer_object_or_file)
 
@@ -47,23 +85,37 @@ class Layer(object):
 	def data_source(self):
 
 		if not self.layer_object.supports("DATASOURCE"):
-			raise NotSupportedError("Provided layer file doesn't support accessing or setting the data source")
+			raise NotSupportedError("Provided layer doesn't support accessing or setting the data source")
 
 		return self.layer_object.dataSource
 
 	@data_source.setter
 	def data_source(self, new_source):
+		self._set_data_source(new_source)
+
+	def _set_data_source(self, new_source):
 		if not self.layer_object.supports("DATASOURCE"):
 			raise NotSupportedError("Provided layer file doesn't support accessing or setting the data source")
 
-		if PRO:
-			self.layer_object.dataSource = new_source
+		desc = arcpy.Describe(new_source)
+		if desc.extension and desc.extension != "":  # get the name with extension for replacing the data source
+			name = "{}.{}".format(desc.baseName, desc.extension)
 		else:
-			desc = arcpy.Describe(new_source)
-			if desc.extension and desc.extension != "":  # get the name with extension for replacing the data source
-				name = "{}.{}".format(desc.baseName, desc.extension)
-			else:
-				name = desc.baseName
+			name = desc.baseName
+
+		if PRO:
+			old_connection_properties = self.layer_object.connectionProperties
+
+			new_factory_type = get_workspace_factory_of_dataset(new_source)
+			self.layer_object.updateConnectionProperties(
+				old_connection_properties,
+				{
+					'dataset': desc.name,
+					'connection_info': {'database': desc.path},
+					'workspace_factory': new_factory_type
+				}
+			)
+		else:
 			self.layer_object.replaceDataSource(desc.path, get_workspace_type(new_source), name)
 
 	@property
@@ -103,6 +155,8 @@ class Layer(object):
 			else:
 				raise NotSupportedError("Cannot retrieve symbology from the object provided. Accepted types are amaptor.Layer, arcpy.mp.Symbology, and arcpy.mp.Layer. You provided {}".format(type(symbology)))
 			self.layer_object.symbology = new_symbology
+			#self.layer_object.symbology.updateRenderer(new_symbology.renderer.type)  # only used in 2.0+
+			#self.layer_object.symbology.updateColorizer(new_symbology.colorizer.type)
 		else:  # if ArcMap, we need to do some workaround
 
 			from amaptor.classes.map import Map  # if we put this at the top, we get a circular import - need it to run at runtime for checking - this should be refactored, but not immediately sure how since these classes are mostly appropriately isolated, but bidrectionally reference each other

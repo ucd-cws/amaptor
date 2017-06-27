@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.1.2.2
+[Fix] Major overhaul of how layers set data source in Pro (so that it actually works, at least for Feature Classes, Shapefiles, Rasters)
+[Structure] Functions to support that overhaul (getting workspace_factory values for each input data source)
+[New] Added Layout.find_map_frame function and associated MapFrameNotFound error
+[New] Added Layout.find_element and Layout.toggle_element functions for managing page element visibility
+[tests] Basic tests for data source changes
+
 ## 0.1.2.1
 Added ability to get and set layer symbology
 

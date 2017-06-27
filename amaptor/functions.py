@@ -94,36 +94,91 @@ def reproject_extent(extent, current_extent):
 	return extent.projectAs(current_extent.spatialReference)
 
 
-def get_workspace_type(dataset_path):
+def get_workspace_type(dataset_path, factory_type=False):
 	"""
 		Gives us a workspace type that's usable for layer.replaceDataSource in ArcMap based on a dataset path
-	:param dataset_path:
+	:param dataset_path: path to dataset to return workspace type from
+	:param factory_type: boolean flag indicating whether to return the workspace_factory type or the standard dataset type - workspace factory values are not yet fully implemented
 	:return:
 	"""
 
+	"""
+		Full list of possible factory values is the following in Pro, per Craig Williams:
+		Access, De-limited Text File, File Geodatabase, OLE Database, Raster, ArcInfo, SDE, Shape File, LASDataset, Sql, TrackingServer, NetCDF, SqlLite, FeatureService, Cad, Excel, Street Map, SDC, Custom, WFS
+	"""
+
+	if factory_type:
+		attr = "factory"
+	else:
+		attr = "workspace_type"
+
 	prog_id_mapping = {
-		"esriDataSourcesGDB.AccessWorkspaceFactory.1": "ACCESS_WORKSPACE",
-		"esriDataSourcesGDB.FileGDBWorkspaceFactory.1": "FILEGDB_WORKSPACE",
-		"esriDataSourcesGDB.InMemoryWorkspaceFactory.1": "NONE",
-		"esriDataSourcesGDB.SdeWorkspaceFactory.1": "SDE_WORKSPACE",
+		"esriDataSourcesGDB.AccessWorkspaceFactory": {
+			"workspace_type": "ACCESS_WORKSPACE",
+			"factory": "Access"  # not positive this is what this value is - can confirm by loading a MDB layer and testing layer.connectionProperties
+		},
+		"esriDataSourcesGDB.FileGDBWorkspaceFactory": {
+			"workspace_type": "FILEGDB_WORKSPACE",
+			"factory": "File Geodatabase"
+		},
+		"esriDataSourcesGDB.InMemoryWorkspaceFactory": {
+			"workspace_type": "NONE",
+			"factory": "",
+		},
+		"esriDataSourcesGDB.SdeWorkspaceFactory": {
+			"workspace_type": "SDE_WORKSPACE",
+			"factory": "SDE"
+		}
+	}
+
+	type_mapping = {
+		"SHAPEFILE": {
+			"workspace_type": "SHAPEFILE_WORKSPACE",
+			"factory": "Shape File"  # found by loading a shapefile layer and testing layer.connectionProperties
+		},
+		"EXCEL": {
+			"workspace_type": "EXCEL_WORKSPACE",
+			"factory": "Excel"
+		},
+		"TEXT": {
+			"workspace_type": "TEXT_WORKSPACE",
+			"factory": "De-limited Text File"
+		},
+		"RASTER": {
+			"workspace_type": "RASTER_WORKSPACE",
+			"factory": "Raster"
+		},
+		"TIN": {
+			"workspace_type": "TIN_WORKSPACE",
+			"factory": ""
+		}
 	}
 
 	dataset_desc = arcpy.Describe(dataset_path)
 	workspace = dataset_desc.path
 	workspace_desc = arcpy.Describe(workspace)
 
-	if workspace_desc.workspaceFactoryProgID in prog_id_mapping:  # if we have the specific name for it here, return that first
-		return prog_id_mapping[workspace_desc.workspaceFactoryProgID]
+	if workspace_desc.workspaceFactoryProgID.replace(".1", "") in prog_id_mapping:  # if we have the specific name for it here, return that first
+		return prog_id_mapping[workspace_desc.workspaceFactoryProgID][attr]
 	elif workspace_desc.workspaceType == "FileSystem":
 		if dataset_desc.extension == "shp":
-			return "SHAPEFILE_WORKSPACE"
+			return type_mapping["SHAPEFILE"][attr]
 		elif dataset_desc.extension in ("xls", "xlsx"):
-			return "EXCEL_WORKSPACE"
+			return type_mapping["EXCEL"][attr]
 		elif dataset_desc.extension in ("tab", "csv", "txt"):  # probably not the best way to handle this
-			return "TEXT_WORKSPACE"
+			return type_mapping["TEXT"][attr]
 		elif dataset_desc.dataType == "Raster":
-			return "RASTER_WORKSPACE"
+			return type_mapping["RASTER"][attr]
 	elif dataset_desc.dataType == "Tin":
-		return "TIN_WORKSPACE"
+		return type_mapping["TIN"][attr]
 	elif workspace_desc.workspaceFactoryProgID == "":
-		return "SHAPEFILE_WORKSPACE"  # if we get to here without returning, it's likely a shapefile - there are a few items missing from this conditional - CAD, VPF, etc
+		return type_mapping["SHAPEFILE"][attr]  # if we get to here without returning, it's likely a shapefile - there are a few items missing from this conditional - CAD, VPF, etc
+
+
+def get_workspace_factory_of_dataset(dataset_path):
+	"""
+		Provides the workspace factory type of a provided dataset - a convenience function that calls get_workspace type with the appropriate flag in the backgroun
+	:param dataset_path: path to dataset to return workspace_factory value of
+	:return:
+	"""
+	return get_workspace_type(dataset_path=dataset_path, factory_type=True)

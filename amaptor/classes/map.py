@@ -86,7 +86,7 @@ class Map(object):
 		else:
 			arcpy.mapping.AddLayer(self.map_object, new_layer, add_position)
 
-		self.list_layers() # make sure the internal layer list is up to date
+		self.list_layers()  # make sure the internal layer list is up to date
 
 
 	def insert_layer(self, reference_layer, insert_layer_or_layerfile, insert_position="BEFORE"):

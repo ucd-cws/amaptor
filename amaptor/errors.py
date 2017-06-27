@@ -30,30 +30,42 @@ class LayoutExists(FileExistsError):
 	def __repr__(self):
 		log.error("Layout with name {} already exists.".format(self.layout_name))
 
-
-class MapNotFoundError(FileNotFoundError):
-	"""
-		Raised when a process is trying to find a specific map and it is not found.
-	"""
-	def __init__(self, map_name, extra_text=None, **kwargs):
-		self.map_name = map_name
-		self.extra_text = extra_text
-		super(MapNotFoundError, self).__init__(**kwargs)
-
-	def __repr__(self):
-		log.error("Map with name {} does not exist. {}".format(self.map_name, self.extra_text))
-
-
-class LayoutNotFoundError(FileNotFoundError):
+class _AmaptorNotFoundError(FileNotFoundError):
 	"""
 		Raised when a process is trying to find a specific layout (Pro only) and it is not found.
 	"""
-	def __init__(self, layout_name, **kwargs):
-		self.layout_name = layout_name
-		super(LayoutNotFoundError, self).__init__(**kwargs)
+	def __init__(self, name, extra_text=None, **kwargs):
+		self.item_name = name
+		self.extra_text = extra_text
+		self.type = None
+		super(_AmaptorNotFoundError, self).__init__(**kwargs)
 
 	def __repr__(self):
-		log.error("Layout with name {} does not exist.".format(self.layout_name))
+		log.error("{} with name {} does not exist. {}".format(self.type, self.item_name, self.extra_text))
+
+class MapNotFoundError(_AmaptorNotFoundError):
+	"""
+		Raised when a process is trying to find a specific map and it is not found.
+	"""
+	def __init__(self, *args, **kwargs):
+		self.type = "Map"
+		super(MapNotFoundError, self).__init__(*args, **kwargs)
+
+class LayoutNotFoundError(_AmaptorNotFoundError):
+	"""
+		Raised when a process is trying to find a specific layout (Pro only) and it is not found.
+	"""
+	def __init__(self, *args, **kwargs):
+		self.type = "Layout"
+		super(LayoutNotFoundError, self).__init__(*args, **kwargs)
+
+class MapFrameNotFoundError(_AmaptorNotFoundError):
+	"""
+		Raised when a process is trying to find a specific layout (Pro only) and it is not found.
+	"""
+	def __init__(self, *args, **kwargs):
+		self.type = "MapFrame"
+		super(MapFrameNotFoundError, self).__init__(*args, **kwargs)
 
 
 class MapNotImplementedError(NotImplementedError):
@@ -88,6 +100,6 @@ class NotSupportedError(NotImplementedError):
 		Raised when a feature is not supported by ArcGIS itself.
 	"""
 	def __init__(self, message, **kwargs):
-		log.error("Not Supported {}.".format(messages))
+		log.error("Not Supported: {}.".format(message))
 		super(NotSupportedError, self).__init__(**kwargs)
 	# for use when a specific mapping function not implemented
