@@ -4,7 +4,7 @@ log = logging.getLogger("amaptor")
 import arcpy
 
 from amaptor.version_check import PRO, ARCMAP, mapping, mp
-from amaptor.errors import NotSupportedError, EmptyFieldError
+from amaptor.errors import NotSupportedError, EmptyFieldError, LayerNotFoundError
 from amaptor.functions import get_workspace_type, get_workspace_factory_of_dataset
 from amaptor.constants import _BLANK_FEATURE_LAYER, _BLANK_RASTER_LAYER
 
@@ -63,6 +63,11 @@ class Layer(object):
 
 					avail_layer = arcpy.mp.LayerFile(layer_file)
 					arcgis_template_layer = avail_layer.listLayers()[0]
+
+					if arcgis_template_layer is None:
+						raise LayerNotFoundError("No layer available for copying from layer file")
+					elif not arcgis_template_layer.supports("DATASOURCE"):
+						raise NotSupportedError("Provided layer file doesn't support accessing or setting the data source")
 
 				self.layer_object = arcgis_template_layer  # set the layer object to the template
 				self._set_data_source(layer_object_or_file)  # now set the data source to be the actual source data - self.data_source does the annoying magic behind this in Pro

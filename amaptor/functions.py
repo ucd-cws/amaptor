@@ -1,5 +1,6 @@
 import os
 import tempfile
+import warnings
 
 import arcpy
 
@@ -50,11 +51,17 @@ def make_layer_with_file_symbology(feature_class, layer_file, layer_name=None):
 	"""
 		Given a feature class or raster and a template layer file with symbology, returns a new Layer object that has the layer
 		from the layer file with the feature class as its data source. Optionally, layer can be renamed with layer_name
+
+		This function will be scheduled for deprecation as it's superceded by using the Layer object with a template layer.
+		More testing needs to be done and maybe more code written in ArcMap to make the alternative apply to both cases. This will
+		be deprecated when that's complete
 	:param feature_class:
 	:param layer_file:
 	:param layer_name:
 	:return:
 	"""
+	#if PRO:  # we'll actually issue the warning once there's a better cross-platform solution. For now, comment it out
+	#	warnings.warn("make_layer_with_file_symbology is deprecated in ArcGIS - use Layer objects with a template layer instead", DeprecationWarning)
 
 	layer = None
 	if PRO:
