@@ -1,9 +1,10 @@
 import logging
 log = logging.getLogger("amaptor")
 
-# Only one of these will be true, but lets people test against the item of their choice (if amaptor.DESKTOP:, etc)
+# Only one of these will be true, but lets people test against the item of their choice (if amaptor.ARCMAP:, etc)
 ARCMAP = None
 PRO = None
+
 MAP_EXTENSION = None
 
 try:
