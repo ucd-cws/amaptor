@@ -215,7 +215,7 @@ class Project(object):
 		self.check_map_name(name)
 
 		# step 1: import
-		self.primary_document.importDocument(template_map)
+		self.primary_document.importDocument(template_map, include_layout=False)
 
 		# step 2: set up for amaptor and rename to match passed value
 		for l_map in self.primary_document.listMaps():

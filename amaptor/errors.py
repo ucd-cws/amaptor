@@ -37,7 +37,6 @@ class _AmaptorNotFoundError(FileNotFoundError):
 	def __init__(self, name, extra_text=None, **kwargs):
 		self.item_name = name
 		self.extra_text = extra_text
-		self.type = None
 		super(_AmaptorNotFoundError, self).__init__(**kwargs)
 
 	def __repr__(self):
@@ -67,6 +66,13 @@ class MapFrameNotFoundError(_AmaptorNotFoundError):
 		self.type = "MapFrame"
 		super(MapFrameNotFoundError, self).__init__(*args, **kwargs)
 
+class ElementNotFoundError(_AmaptorNotFoundError):
+	"""
+		Raised when searching a layout for an element, and it's not found
+	"""
+	def __init__(self, *args, **kwargs):
+		self.type = "Element"
+		super(ElementNotFoundError, self).__init__(*args, **kwargs)
 
 class MapNotImplementedError(NotImplementedError):
 	"""

@@ -1,9 +1,11 @@
 import logging
 log = logging.getLogger("amaptor")
 
+import arcpy
+
 from amaptor.classes.map_frame import MapFrame
 from amaptor.version_check import PRO
-from amaptor.errors import MapFrameNotFoundError
+from amaptor.errors import MapFrameNotFoundError, ElementNotFoundError, NotSupportedError
 
 class Layout(object):
 	"""
@@ -38,7 +40,8 @@ class Layout(object):
 			self.project.primary_document.title = value
 
 	def list_elements(self):
-		return self._layout_object.listElements()
+		self.elements = self._layout_object.listElements()
+		return self.elements
 
 	def export_to_png(self, out_path, resolution=300):
 		"""
@@ -61,8 +64,10 @@ class Layout(object):
 			for frame in self.frames:
 				if name == frame.name:
 					return frame
-			else:
-				raise MapFrameNotFoundError(name=name)
+
+			raise MapFrameNotFoundError(name=name)
+		else:
+			raise NotSupportedError("Map Frames are not supported in ArcMap")
 
 	def find_element(self, name):
 		"""
@@ -70,29 +75,38 @@ class Layout(object):
 		:param name:
 		:return:
 		"""
-		for element in self.elements:
-			if element.name == name:
-				return name
+		if PRO:
+			for element in self.elements:
+				if element.name == name:
+					return element
 
-	def toggle_element(self, name, visibility="TOGGLE"):
+			raise ElementNotFoundError(name)
+		else:
+			raise NotSupportedError("Element actions are not supported in ArcMap")
+
+	def toggle_element(self, name_or_element, visibility="TOGGLE"):
 		"""
 			Given an element name, toggles, makes visible, or makes invisible that element.
-		:param name:
+		:param name_or_element: a string name of an element, or an element object
 		:param visibility: Controls the action. Valid values are boolean (True, False) or the keyword "TOGGLE" which
 			switches its current visibility state.
 		:return:
 		"""
-
-		element = self.find_element(name)
-		if visibility is True or visibility is False:
-			element.visible = visibility
-		elif visibility == "TOGGLE":
-			if element.visible is True:
-				element.visible = False
+		if PRO:
+			if not isinstance(name_or_element, arcpy._mp.GraphicElement):
+				element = self.find_element(name_or_element)
 			else:
-				element.visible = True
-		else:
-			raise ValueError("parameter visibility must be either a boolean value, (True, False) or the keyword \"TOGGLE\".")
+				element = name_or_element
+
+			if visibility is True or visibility is False:
+				element.visible = visibility
+			elif visibility == "TOGGLE":
+				if element.visible is True:
+					element.visible = False
+				else:
+					element.visible = True
+			else:
+				raise ValueError("parameter visibility must be either a boolean value, (True, False) or the keyword \"TOGGLE\".")
 
 	def export_to_pdf(self, out_path, **kwargs):
 		self._layout_object.exportToPDF(out_path, **kwargs)
