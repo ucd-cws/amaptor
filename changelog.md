@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.1.2.3
+[Enhancement] Added buffer_factor on Map.zoom_to_layer and Map.set_extent to control space around layers and extents.
+[Fix] Fixed regression in Map.find_layer where providing a layer name would give "AttributeError: 'Layer' object has no attribute 'dataSource'"
+[Fix] Maps were being incompletely assigned to map frames in certain instances, causing inability to use zoom_to_layer, and anything that cross-references maps and frames. Fixed.
+
 ## 0.1.2.2
 [Fix] Major overhaul of how layers set data source in Pro (so that it actually works, at least for Feature Classes, Shapefiles, Rasters)
 [Structure] Functions to support that overhaul (getting workspace_factory values for each input data source)

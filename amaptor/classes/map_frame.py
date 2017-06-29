@@ -2,7 +2,7 @@ import logging
 log = logging.getLogger("amaptor")
 
 from amaptor.version_check import mp
-from amaptor.errors import *
+from amaptor.errors import MapNotFoundError
 #from amaptor.classes import map
 
 class MapFrame(object):
@@ -13,11 +13,11 @@ class MapFrame(object):
 		try:
 			self._map = layout.project.find_map(map_frame_object.map.name)  # find the map that this relates to
 		except MapNotFoundError:
-			pass  # this is ok, because if we just created the frame, it may not be findable (as when we import a layout), but it should be set later
+			self._map = None  # this is ok, because if we just created the frame, it may not be findable (as when we import a layout), but it should be set later
 
 	def _set_map(self, amaptor_map):
 
-		#if not isinstance(amaptor_map, map.Map):
+		#if not isinstance(amaptor_map, map.Map):  # probably getting a circular import here, why it's commented out
 		#	raise MapNotFoundError("Provided map is either None or not an instance of amaptor.classes.Map")
 
 		self._map = amaptor_map
@@ -40,7 +40,7 @@ class MapFrame(object):
 
 	@property
 	def map(self):
-		return self._map_frame_object.map
+		return self._map
 
 	@map.setter
 	def map(self, value):

@@ -41,7 +41,7 @@ class Map(object):
 		self.layouts = []
 		for layout in self.project.layouts:
 			for frame in layout.frames:
-				if frame.map.name == self.name:
+				if frame.map and frame.map.name == self.name:  # if the frame has a map and it has the same name
 					self.frames.append(frame)
 					if layout not in self.layouts:
 						self.layouts.append(layout)
@@ -121,7 +121,7 @@ class Map(object):
 		# update the internal layers list at the end
 		self.list_layers()
 
-	def set_extent(self, extent_object, set_frame="ALL", add_buffer=True):
+	def set_extent(self, extent_object, set_frame="ALL", add_buffer=True, buffer_factor=.05):
 		"""
 			Sets map frames to a provided extent object. In ArcMap, just sets the data frame's extent. In Pro, it has many
 			potential behaviors. If set_frame == "ALL" it sets all map frames linked to this map to this extent (default
@@ -129,13 +129,14 @@ class Map(object):
 			If set_frame is an arcpy.mp MapFrame object instance, then it only sets the extent on that map frame.
 		:param extent_object: an arcpy.Extent object. It will be reprojected to the spatial reference of the map frame or data frame automatically.
 		:param set_frame: ignored in arcmap, behavior described in main method description.
-		:param add_buffer: adds an empty space of 5% of the distance across the feature class around the provided exetent
+		:param add_buffer: adds an empty space of 5% of the distance across the feature class around the provided extent
+		:param buffer_factor: if add_buffer is True, then this factor controls how much space to add around the layer (default=.05)
 		:return: None
 		"""
 
 		if add_buffer:
-			x_buf = (extent_object.XMax - extent_object.XMin) * .05
-			y_buf = (extent_object.YMax - extent_object.YMin) * .05
+			x_buf = (extent_object.XMax - extent_object.XMin) * buffer_factor
+			y_buf = (extent_object.YMax - extent_object.YMin) * buffer_factor
 
 			extent_object.XMax += x_buf
 			extent_object.XMin -= x_buf
@@ -160,7 +161,7 @@ class Map(object):
 		else:
 			self.map_object.extent = reproject_extent(extent_object, self.map_object.extent)
 
-	def zoom_to_layer(self, layer, set_frame="ALL"):
+	def zoom_to_layer(self, layer, set_frame="ALL", add_buffer=True, buffer_factor=.05):
 		"""
 			Given a name of a layer as a string or a layer object, zooms the map extent to that layer
 			WARNING: In Pro, see the parameter information for set_layout on the set_extent method for a description
@@ -170,6 +171,8 @@ class Map(object):
 		:param set_layout: PRO ONLY, but ignored in ArcMap, so can be safe to use. This parameter controls which map frames
 			are changed by the Zoom to Layer. By default, all linked map frames are updated. If an arcpy.mp.MapFrame instance
 			or an amaptor.MapFrame instance is provided, it zooms only that map frame to the layer.
+		:param add_buffer: adds an empty space of 5% of the distance across the feature class around the provided extent
+		:param buffer_factor: if add_buffer is True, then this factor controls how much space to add around the layer (default=.05)
 		:return: None
 		"""
 		if isinstance(layer, Layer):
@@ -177,12 +180,12 @@ class Map(object):
 
 		if PRO:
 			if not isinstance(layer, arcpy._mp.Layer):
-				layer = self.find_layer(name=layer)
-			self.set_extent(arcpy.Describe(layer.dataSource).extent, set_frame=set_frame)
+				layer = self.find_layer(name=layer).layer_object
+			self.set_extent(arcpy.Describe(layer.dataSource).extent, set_frame=set_frame, add_buffer=add_buffer, buffer_factor=buffer_factor)
 		else:
 			if not isinstance(layer, arcpy._mapping.Layer):
-				layer = self.find_layer(name=layer)
-			self.set_extent(layer.getExtent())
+				layer = self.find_layer(name=layer).layer_object
+			self.set_extent(layer.getExtent(), add_buffer=add_buffer, buffer_factor=buffer_factor)
 			arcpy.RefreshActiveView()
 
 	def insert_layer_by_name_or_path(self, insert_layer_or_layer_file, near_name=None, near_path=None, insert_position="BEFORE"):
