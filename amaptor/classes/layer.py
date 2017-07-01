@@ -27,7 +27,7 @@ class Layer(object):
 
 		:param layer_object_or_file: an actual instance of a layer object, a valid data source (feature class, raster, etc) or a layer file path (layer file paths work best in Pro, which supports multiple layers in a single file - for cross platform usage, open the layer file and get the Layer object you need, then make an amaptor layer with that)
 		:param name: used when loading from a file in Pro to select the layer of interest
-		:param map: the map this layer belongs to - optional but used when updating symbology in ArcMap
+		:param map_object: the map this layer belongs to - optional but used when updating symbology in ArcMap - not necessary if you plan to use map.add_layer or map.insert_layer before updating symbology
 		:param template_layer: This is used in Pro when constructing a layer from a data source - it will start automatically
 					with this layer's properties, symbology, etc. In future versions, we hope to have it autodetect the most appropriate
 					template layer that comes with amaptor, but for now, this is an option so that you can get the right properties
@@ -139,15 +139,17 @@ class Layer(object):
 			file, open it and retrieve the appropriate Layer object and pass it here.
 
 			IMPORTANT: If you are setting symbology using this method in ArcMap, you MUST attach an amaptor.Map instance
-			 representing the Data Frame that this layer is within as this_layer.map. Example usage
+			representing the Data Frame that this layer is within as this_layer.map *before* doing any symbology operations.
+			amaptor functions handle this by default when finding layers and inserting them,  but if you are creating
+			your own amaptor layer objects and haven't yet inserted it into a map, you'll need to set the `map` attribute
 
 			```
-			  	# my_map is an amaptor.Map object instance
-			  	my_layer = my_map.find_layer("layer_name")
-			  	symbol_layer = my_map.find_layer("layer_with_symbology_to_copy")
+			  	my_layer = amaptor.Layer("my_layer_name", template_layer="some_layer_file.lyr")
 			  	my_layer.map = my_map  # set the map attribute so it knows what data frame to use. Should be an amaptor.Map object, not an actual data frame.
 			  	my_layer.symbology = symbol_layer # copies symbology from symbol_layer to my_layer
 			```
+			The step `my_layer.map` isn't necessary in the instance that you use map.add_layer or map.insert_layer before updating symbology
+
 
 		:param symbology: Symbology can be a symbology object or a layer to copy it from
 		:return:

@@ -50,10 +50,14 @@ class Map(object):
 	def _get_layers_pro(self):
 		self._arcgis_layers = self.map_object.listLayers()
 		self.layers = [Layer(layer) for layer in self._arcgis_layers]
+		for layer in self.layers:  # set the map on the layer as a backreference
+			layer.map = self
 
 	def _get_layers_arcmap(self):
 		self._arcgis_layers = mapping.ListLayers(self.project.map_document)
 		self.layers = [Layer(layer) for layer in self._arcgis_layers]
+		for layer in self.layers:  # set the map on the layer as a backreference
+			layer.map = self
 
 	def list_layers(self):
 		"""
@@ -78,6 +82,7 @@ class Map(object):
 		"""
 		if isinstance(add_layer, Layer):  # if it's an amaptor layer
 			new_layer = add_layer.layer_object
+			new_layer.map = self  # this helps some future operations that require knowing what map the layer is a part of
 		else:
 			new_layer = add_layer
 
@@ -101,6 +106,7 @@ class Map(object):
 
 		if isinstance(insert_layer_or_layerfile, Layer):
 			insert_layer_or_layerfile = insert_layer_or_layerfile.layer_object
+			insert_layer_or_layerfile.map = self  # this helps some future operations where layers need to know what maps they're a part of
 		else:
 			if PRO:
 				layer_type = arcpy._mp.Layer
