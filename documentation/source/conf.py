@@ -41,7 +41,7 @@ if ON_RTD:  # if we're on read-the-docs, then we need to mock out arcpy
     for mod_name in MOCK_MODULES:
         sys.modules[mod_name] = Mock()
 
-version = "0.1.0.1"
+version = "0.1.2.3"
 
 
 

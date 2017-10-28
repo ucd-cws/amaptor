@@ -23,5 +23,5 @@ except ImportError:
 		log.debug("Found ArcGIS Pro (arcpy.mp)")
 		mapping = None  # define so can always be imported
 	except ImportError:
-		print("You must run {} on a Python installation that has arcpy installed".format(__name__))
+		print("You must run amaptor on a Python installation that has arcpy installed")
 		raise
