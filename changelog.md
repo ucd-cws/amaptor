@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.1.2.4
+[Change] When trying to retrieve an unsupported symbology from a layer when using ArcMap, it now raises NotSupportedError
+[Enhancement] Can now pass the path to a layer file to a layer.symbology and have it copy the symbology over
+
 ## 0.1.2.3
 [Enhancement] Added buffer_factor on Map.zoom_to_layer and Map.set_extent to control space around layers and extents.
 [Enhancement] layers now automatically register the map they're attached to when inserting layers or finding on the map
