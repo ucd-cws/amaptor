@@ -1,5 +1,6 @@
+import os
 import logging
-log = logging.getLogger("amaptor")
+log = logging.getLogger("amaptor.layer")
 
 import arcpy
 
@@ -125,6 +126,15 @@ class Layer(object):
 
 	@property
 	def symbology(self):
+		"""
+			Access symbology properties. If running from ArcMap and layer symbologyType is "OTHER" raises NotSupportedError
+			to flag that the symbology is unreadable and unreturnable. No equivalent check in Pro.
+		:return:
+		"""
+
+		if ARCMAP and self.layer_object.symbologyType == "OTHER":
+			raise NotSupportedError("Unsupported symbology type in ArcMap")
+
 		return self.layer_object.symbology
 
 	@symbology.setter
@@ -133,7 +143,8 @@ class Layer(object):
 			Updates layer symbology based on copying from:
 			 1) amaptor Layer object
 			 2) arcpy.mapping/arcpy.mp Layer objects
-			 3) symbology object. Symbology objects only exist in Pro, so take care when using them for cross-platform support.
+			 3) A path to a layer file - if you pass in a string, it will be assumed to be a path to a layer file and symbology will be loaded from the file
+			 4) symbology object. Symbology objects only exist in Pro, so take care when using them for cross-platform support.
 
 			raises NotSupportedError if the provided object cannot be copied from. If you wish to copy symbology from a Layer
 			file, open it and retrieve the appropriate Layer object and pass it here.
@@ -151,7 +162,7 @@ class Layer(object):
 			The step `my_layer.map` isn't necessary in the instance that you use map.add_layer or map.insert_layer before updating symbology
 
 
-		:param symbology: Symbology can be a symbology object or a layer to copy it from
+		:param symbology: Symbology can be a symbology object or a layer to copy it from, or a path to a layer file on disk
 		:return:
 		"""
 		if PRO:
@@ -159,13 +170,16 @@ class Layer(object):
 				new_symbology = symbology
 			elif isinstance(symbology, arcpy._mp.Layer) or isinstance(symbology, Layer):  # if it's an amaptor layer, and we're Pro, copy it from there
 				new_symbology = symbology.symbology
+			elif type(symbology) == str:
+				if not os.path.exists(symbology):
+					raise RuntimeError("Provided symbology was a string, but is not a valid file path. Please provide a valid file path, layer object, or symbology object")
+				new_symbology = arcpy.mp.LayerFile(symbology).symbology
 			else:
 				raise NotSupportedError("Cannot retrieve symbology from the object provided. Accepted types are amaptor.Layer, arcpy.mp.Symbology, and arcpy.mp.Layer. You provided {}".format(type(symbology)))
 			self.layer_object.symbology = new_symbology
 			#self.layer_object.symbology.updateRenderer(new_symbology.renderer.type)  # only used in 2.0+
 			#self.layer_object.symbology.updateColorizer(new_symbology.colorizer.type)
 		else:  # if ArcMap, we need to do some workaround
-
 			from amaptor.classes.map import Map  # if we put this at the top, we get a circular import - need it to run at runtime for checking - this should be refactored, but not immediately sure how since these classes are mostly appropriately isolated, but bidrectionally reference each other
 			if self.map is None or not isinstance(self.map, Map):
 				raise EmptyFieldError("map", "Layer is not attached to an amaptor.Map instance - cannot change symbology. See documentation.")
@@ -174,6 +188,10 @@ class Layer(object):
 				source_data = symbology.layer_object
 			elif isinstance(symbology, arcpy.mapping.Layer):
 				source_data = symbology
+			elif type(symbology) in (str, unicode):
+				if not os.path.exists(symbology):
+					raise RuntimeError("Provided symbology was a string, but is not a valid file path. Please provide a valid file path or layer object")
+				source_data = arcpy.mapping.Layer(symbology)
 			else:
 				raise NotSupportedError("Cannot retrieve symbology from the object provided. Accepted types are amaptor.Layer and arcpy.mapping.Layer. You provided {}".format(type(symbology)))
 
