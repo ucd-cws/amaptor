@@ -38,7 +38,7 @@ except ImportError:
 try:
 	from amaptor.version import __version__, __author__
 except RuntimeError:  # added so it can be installed with setup.py develop when signed in as an admin that's not signed into Portal in ArcGIS Pro
-	__version__ = "0.1.2.4"
+	__version__ = "0.1.2.5"
 	__author__ = "nickrsan"
 
 setup(name="amaptor",

@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.1.2.5
+[Bugfix] Detection of geodatabase workspaces failed - especially used in loading symbology
+[Enhancement] When setting symbology, checks that type of symbology being applied matches the layer and raises an error if not
+
 ## 0.1.2.4
 [Change] When trying to retrieve an unsupported symbology from a layer when using ArcMap, it now raises NotSupportedError
 [Enhancement] Can now pass the path to a layer file to a layer.symbology and have it copy the symbology over
