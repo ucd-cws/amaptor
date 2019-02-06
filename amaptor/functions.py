@@ -165,8 +165,9 @@ def get_workspace_type(dataset_path, factory_type=False):
 	workspace = dataset_desc.path
 	workspace_desc = arcpy.Describe(workspace)
 
-	if workspace_desc.workspaceFactoryProgID.replace(".1", "") in prog_id_mapping:  # if we have the specific name for it here, return that first
-		return prog_id_mapping[workspace_desc.workspaceFactoryProgID][attr]
+	factory_prog_key = workspace_desc.workspaceFactoryProgID.replace(".1", "")
+	if factory_prog_key in prog_id_mapping:  # if we have the specific name for it here, return that first
+		return prog_id_mapping[factory_prog_key][attr]
 	elif workspace_desc.workspaceType == "FileSystem":
 		if dataset_desc.extension == "shp":
 			return type_mapping["SHAPEFILE"][attr]

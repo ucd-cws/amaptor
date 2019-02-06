@@ -149,6 +149,10 @@ class Layer(object):
 			raises NotSupportedError if the provided object cannot be copied from. If you wish to copy symbology from a Layer
 			file, open it and retrieve the appropriate Layer object and pass it here.
 
+			In ArcMap, it *may* require that the current layer and the symbology object (of whatever form) share the same
+			type of renderer (for example, on a raster, that they both use a classified renderer or both use a stretched
+			renderer, etc).
+
 			IMPORTANT: If you are setting symbology using this method in ArcMap, you MUST attach an amaptor.Map instance
 			representing the Data Frame that this layer is within as this_layer.map *before* doing any symbology operations.
 			amaptor functions handle this by default when finding layers and inserting them,  but if you are creating
@@ -194,6 +198,10 @@ class Layer(object):
 				source_data = arcpy.mapping.Layer(symbology)
 			else:
 				raise NotSupportedError("Cannot retrieve symbology from the object provided. Accepted types are amaptor.Layer and arcpy.mapping.Layer. You provided {}".format(type(symbology)))
+
+			if self.layer_object.symbologyType != source_data.symbologyType:
+				log.warning("Trying to apply symbology with a renderer of type {} to a layer with renderer of type {} - this"
+							"may fail in ArcMap".format(source_data.symbologyType, self.layer_object.symbologyType))
 
 			arcpy.mapping.UpdateLayer(data_frame=self.map.map_object,
 									  update_layer=self.layer_object,
